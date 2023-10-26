@@ -1,7 +1,7 @@
+import torch
 import torch.nn as nn
 import torch.nn.functional as F
-
-
+from torchvision import models
 
 
 
@@ -71,3 +71,33 @@ def Model(num_classes, num_channels):
     else:
         encoder = _Encoder(layers=layers)
         return _Model(output_size=num_classes, encoder=encoder)
+
+
+class MultiTaskModel(nn.Module):
+    def __init__(self, num_classes_list):
+        super(MultiTaskModel, self).__init__()
+        # Load a pre-trained ResNet-34 model
+        self.resnet = models.resnet34(pretrained=True)
+        
+        # Remove the last fully-connected layer
+        self.resnet = nn.Sequential(*list(self.resnet.children())[:-1])
+        
+        # Define new layers for multi-task learning
+        # Num_classes_list is a list of integers, each representing the number of classes for a specific task. For example: [7, 2, 5] for race, gender, and age groups respectively.
+        self.fc_layers = nn.ModuleList([nn.Linear(self.resnet[-1][-1].in_features, num_classes) for num_classes in num_classes_list])
+        
+    def forward(self, x):
+        x = self.resnet(x)
+        x = torch.flatten(x, 1)  # Flatten the features
+        
+        # Number of outputs = number of tasks
+        outputs = [fc_layer(x) for fc_layer in self.fc_layers]
+        
+        return outputs  # List of outputs for different tasks
+
+
+if __name__ == "__main__":
+    # Example usage:
+    # Say we're handling three tasks (race, gender, age), and we have different numbers of classes for each
+    num_classes_list = [7, 2, 5]  # just an example, actual numbers based on the dataset
+    model = MultiTaskModel(num_classes_list=num_classes_list)
