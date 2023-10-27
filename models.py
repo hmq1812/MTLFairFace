@@ -54,7 +54,11 @@ class MultiTaskFairFaceModel(nn.Module):
 
 if __name__ == "__main__":
     # Define the number of classes for each task (e.g., age, gender, race)
-    num_classes_list = [5, 2, 7]  # Just an example; adjust according to the dataset
+    # race_scores_fair (model confidence score) [White, Black, Latino_Hispanic, East, Southeast Asian, Indian, Middle Eastern]
+    # race_scores_fair_4 (model confidence score) [White, Black, Asian, Indian]
+    # gender_scores_fair (model confidence score) [Male, Female]
+    # age_scores_fair (model confidence score) [0-2, 3-9, 10-19, 20-29, 30-39, 40-49, 50-59, 60-69, 70+]
+    num_classes_list = [9, 2, 7]  
 
     # Create the model
     multi_task_model = MultiTaskFairFaceModel(num_classes_list=num_classes_list)

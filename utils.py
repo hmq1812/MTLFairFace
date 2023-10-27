@@ -129,6 +129,10 @@ class FairFaceLoader(BaseDataLoader):
 
         self._len = len(self.fairface_frame)
 
+
+    def get_loader(self):
+        return self.dataloader
+
     def __len__(self):
         return self._len
 
