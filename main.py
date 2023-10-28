@@ -73,7 +73,7 @@ def main():
 
 if __name__ == '__main__':
     # main()
-    A = FairFaceMultiTaskAgent([9,2,7])
-    train_data = FairFaceLoader("FairFaceData/fairface_label_val.csv", "FairFaceData/fairface-img-margin025-trainval/")
-    test_data = FairFaceLoader("FairFaceData/fairface_label_val.csv", "FairFaceData/fairface-img-margin025-trainval/")
-    A.train(train_data, test_data)
+    A = FairFaceMultiTaskAgent([2,9,7])
+    train_data = FairFaceLoader("FairFaceData/fairface-img-margin025-trainval/", "FairFaceData/fairface_label_val.csv", 16)
+    test_data = FairFaceLoader("FairFaceData/fairface-img-margin025-trainval/", "FairFaceData/fairface_label_val.csv", 16)
+    A.train(train_data, test_data, verbose=True)

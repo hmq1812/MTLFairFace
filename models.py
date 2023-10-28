@@ -17,39 +17,45 @@ class MultiTaskFairFaceModel(nn.Module):
         self.shared_backbone = nn.Sequential(*modules)
 
         # Find out the the fully connected layer's input features based on the backbone architecture
-        num_ftrs = shared_backbone.fc.in_features  # get the no. of in_features in fc layer
+        output_feature_size = shared_backbone.fc.in_features  # get the no. of in_features in fc layer
 
-        # Each task will have its own classification head
-        # Create them based on the number of tasks and their specific number of classes.
-        self.task_heads = nn.ModuleList([
-            nn.Linear(num_ftrs, num_classes) for num_classes in num_classes_list
-        ])
+        num_gender, num_age, num_race = num_classes_list
+        # Task-specific layers, Each task will have its own classification head
+        self.gender_layer = nn.Sequential(
+            nn.Linear(output_feature_size, 128),
+            nn.ReLU(),
+            nn.Linear(128, num_gender)
+        )
+        
+        self.age_layer = nn.Sequential(
+            nn.Linear(output_feature_size, 128),
+            nn.ReLU(),
+            nn.Linear(128, num_age)
+        )
+        
+        self.race_layer = nn.Sequential(
+            nn.Linear(output_feature_size, 128),
+            nn.ReLU(),
+            nn.Linear(128, num_race)  
+        )
+
 
     def forward(self, x):
         # Forward pass through the shared backbone
         shared_features = self.shared_backbone(x)
         shared_features = torch.flatten(shared_features, 1)  # Flatten the features from the backbone
 
-        # Forward pass through each task-specific head
-        logits = [task_head(shared_features) for task_head in self.task_heads]
+        # Forward pass through task-specific layers
+        out_gender = self.gender_layer(shared_features)
+        out_age = self.age_layer(shared_features)
+        out_race = self.race_layer(shared_features)
 
-        return logits  # It returns a list of outputs for each task
-
-        # # Forward pass through the base model
-        # x = self.base_model(x)
-
-        # # Task-specific forward passes
-        # out_gender = self.fc_gender(x)
-        # out_race = self.fc_race(x)
-        # out_age = self.fc_age(x)
-
-        # # The model will output a dictionary of outputs
-        # return {
-        #     'gender': out_gender,
-        #     'race': out_race,
-        #     'age': out_age
-        # }
-
+        # Return dictionary output
+        return {
+            'gender': out_gender,
+            'age': out_age,
+            'race': out_race
+        }
 
 
 if __name__ == "__main__":
