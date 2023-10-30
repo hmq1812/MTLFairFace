@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import os
-import json
+import csv
 from models import MultiTaskFairFaceModel
 from tqdm import tqdm
 
@@ -58,6 +58,10 @@ class FairFaceMultiTaskAgent(BaseAgent):
             'task_loss': {task: [] for task in task_names}  # Storing task-specific losses
         }
 
+        best_accuracy = 0.0  # Initialize best accuracy
+        best_model_path = os.path.join(save_path, 'best_model.pth')  # Path to save the best model
+        last_model_path = os.path.join(save_path, 'last_model.pth')  # Path to save the last model
+
         for epoch in range(num_epochs):
             epoch_loss = 0.0
             task_losses = {task: 0.0 for task in task_names}
@@ -96,14 +100,24 @@ class FairFaceMultiTaskAgent(BaseAgent):
                 history['task_loss'][task].append(loss)
 
             # Evaluate after each epoch
-            eval_metrics = self.eval(test_data, task_names, criterions)  # Adjusting eval method for multi-task
+            eval_metrics = self.eval(test_data, task_names)  # Adjusting eval method for multi-task
             history['accuracy'].append(eval_metrics['accuracy'])
+            
+            # Check and save best model
+            if eval_metrics['accuracy'] > best_accuracy:
+                best_accuracy = eval_metrics['accuracy']
+                self.save_model(best_model_path)  # Save the current best model
+                if verbose:
+                    print(f"Best model updated with accuracy: {best_accuracy:.4f} at epoch {epoch+1}")
 
             if verbose:
                 print(f"Epoch {epoch+1} - Loss: {epoch_loss:.4f}, Accuracy: {eval_metrics['accuracy']:.4f}")
                 for task, loss in task_losses.items():
                     print(f"{task.capitalize()} Task Loss: {loss:.4f}")
 
+        # Save the last model after all epochs are complete
+        self.save_model(last_model_path)
+        
         if save_history:
             self._save_history(history, save_path)
 
@@ -112,11 +126,23 @@ class FairFaceMultiTaskAgent(BaseAgent):
         if not os.path.isdir(save_path):
             os.makedirs(save_path)
 
-        for i, h in enumerate(zip(*history)):
-            filename = os.path.join(save_path, 'history_class{}.json'.format(i))
+        # Define CSV filename
+        filename = os.path.join(save_path, 'training_history.csv')
 
-            with open(filename, 'w') as f:
-                json.dump(h, f)
+        # Define the CSV column headers
+        headers = ['epoch', 'total_loss', 'accuracy'] + [f"{task}_task_loss" for task in history['task_loss'].keys()]
+
+        # Write to CSV
+        with open(filename, 'w', newline='') as file:
+            writer = csv.writer(file)
+            writer.writerow(headers)
+
+            for epoch in range(len(history['accuracy'])):
+                row = [epoch+1, history['total_loss'][epoch], history['accuracy'][epoch]]
+                for task, losses in history['task_loss'].items():
+                    row.append(losses[epoch])
+                writer.writerow(row)
+
 
 
     def save_model(self, save_path='model.pth'):
@@ -130,7 +156,7 @@ class FairFaceMultiTaskAgent(BaseAgent):
         else:
             raise ValueError(f"No such file or directory: '{load_path}'")
 
-    def eval(self, data_loader, task_names, criterions):
+    def eval(self, data_loader, task_names):
         """Adjusted evaluation method for multi-task learning."""
         self.model.eval()
 

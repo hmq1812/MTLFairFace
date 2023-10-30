@@ -75,14 +75,14 @@ class BaseDataLoader:
         
 
 class FairFaceLoader(BaseDataLoader):
-    def __init__(self, data_path, label_path, batch_size=128, train=True, shuffle=True, drop_last=False, transform=None):
+    def __init__(self, data_path, label_path, batch_size=128, shuffle=True, drop_last=False, transform=None):
         """
         Args:
             label_path (string): Path to the CSV file with annotations.
             data_path (string): Directory with all the images.
             transform (callable, optional): Optional transform to be applied on a sample.
         """
-        super(FairFaceLoader, self).__init__(batch_size, train, shuffle, drop_last)
+        super(FairFaceLoader, self).__init__(batch_size, shuffle, drop_last)
         
         self.data_path = data_path
         self.label = pd.read_csv(label_path)
