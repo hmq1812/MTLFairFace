@@ -1,4 +1,3 @@
-import numpy as np
 import argparse
 from agents import FairFaceMultiTaskAgent
 from utils import FairFaceLoader

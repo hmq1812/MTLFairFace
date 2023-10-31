@@ -14,7 +14,7 @@ CLASS_LIST = [2, 9, 7]
 LOSS_WEIGHT = None
 
 # Data parameters
-BATCH_SIZE = 32
+BATCH_SIZE = 64
 SHUFFLE = True
 DROP_LAST = True
 TRANSFORM = None
