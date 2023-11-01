@@ -24,6 +24,7 @@ def train(args):
         train_data=train_data,
         test_data=test_data,
         num_epochs=config.NUM_EPOCHS,
+        lr=config.LEARNING_RATE,
         save_history=config.SAVE_HISTORY,
         save_path=config.SAVE_PATH,
         verbose=args.verbose

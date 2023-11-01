@@ -37,19 +37,19 @@ class FairFaceMultiTaskAgent(BaseAgent):
         else:
             self.loss_weights = loss_weights
 
-    def train(self, train_data, test_data, num_epochs=50, save_history=False, save_path='.', verbose=False):
+    def train(self, train_data, test_data, num_epochs=50, lr=0.1, save_history=False, save_path='.', verbose=False):
         self.model.train()
         
         task_names = ['age', 'gender', 'race'] 
 
         # Criterion for each task (loss function)
         criterions = {
-            'age': nn.CrossEntropyLoss(),
-            'gender': nn.CrossEntropyLoss(),
-            'race': nn.CrossEntropyLoss()
+            'age': nn.CrossEntropyLoss(reduction='mean'),
+            'gender': nn.CrossEntropyLoss(reduction='mean'),
+            'race': nn.CrossEntropyLoss(reduction='mean')
         }
 
-        optimizer = optim.SGD(self.model.parameters(), lr=0.1)
+        optimizer = optim.SGD(self.model.parameters(), lr=lr)
 
         # Set up storage for metrics
         history = {
@@ -88,6 +88,10 @@ class FairFaceMultiTaskAgent(BaseAgent):
                     total_loss += self.loss_weights[i] * loss 
 
                 total_loss.backward()
+
+                # Gradient Clipping
+                torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=1.0)
+      
                 optimizer.step()
                 epoch_loss += total_loss.item()
 
