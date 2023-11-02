@@ -1,6 +1,6 @@
 import argparse
 from agents import FairFaceMultiTaskAgent
-from utils import FairFaceLoader
+from dataset import FairFaceLoader
 import config
 
 def parse_args():
