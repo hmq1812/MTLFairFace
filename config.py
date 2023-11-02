@@ -9,7 +9,7 @@ SAVE_PATH = "."
 MODEL_PATH = "model.pth"
 
 # Train Parameters
-NUM_EPOCHS = 20
+NUM_EPOCHS = 50
 CLASS_LIST = [2, 9, 7]
 LOSS_WEIGHT = None
 LEARNING_RATE = 0.01
