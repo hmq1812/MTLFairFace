@@ -58,8 +58,13 @@ class MissingLabelLoss:
                     loss = torch.tensor(0.0).to(output.device)
                 
                 # For the rest, use entropy as a penalty
+                # Softmax: omputes the softmax of the model's output
+                # Log Softmax: improve numerical stability.
+                # Entropy Calculation: calculates the negative log likelihood for each class
+                # High entropy means that the model is uncertain in its predictions, as the probabilities are spread out across multiple classes
                 entropy_loss = -torch.mean(torch.sum(F.softmax(output[~mask], dim=1) 
                                                     * F.log_softmax(output[~mask], dim=1), dim=1))
+                
                 
                 # Combine the losses
                 loss = loss + entropy_loss
