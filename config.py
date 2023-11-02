@@ -5,17 +5,21 @@ TRAIN_DATA_PATH = "FairFaceData/fairface-img-margin025-trainval/"
 TEST_DATA_PATH = "FairFaceData/fairface-img-margin025-trainval/"
 TRAIN_LABEL_FILE = "FairFaceData/fairface_label_train.csv"
 TEST_LABEL_FILE = "FairFaceData/fairface_label_val.csv"
-SAVE_PATH = "."
-MODEL_PATH = "model.pth"
+SAVE_PATH = "model"
+MODEL_PATH = "model/best_model.pth"
+
+# Model Parameters
+CLASS_LIST = [2, 9, 7]
+CLASS_NAME = ['age', 'gender', 'race']
+LOSS_WEIGHT = None
+ASSIGN_LABEL_THRESHOLD = 0.8
 
 # Train Parameters
-NUM_EPOCHS = 50
-CLASS_LIST = [2, 9, 7]
-LOSS_WEIGHT = None
 LEARNING_RATE = 0.01
+NUM_EPOCHS = 50
 
 # Data parameters
-BATCH_SIZE = 128
+BATCH_SIZE = 32
 SHUFFLE = True
 DROP_LAST = True
 TRANSFORM = None
