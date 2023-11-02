@@ -3,9 +3,9 @@ import torch.nn as nn
 import torch.optim as optim
 import os
 import csv
-from models import MultiTaskFairFaceModel
 from tqdm import tqdm
 
+from models import MultiTaskFairFaceModel
 
 
 class BaseAgent:
@@ -26,7 +26,7 @@ class BaseAgent:
 
 
 class FairFaceMultiTaskAgent(BaseAgent):
-    def __init__(self, num_classes_per_task, loss_weights=None):
+    def __init__(self, loss_fn, task_names, num_classes_per_task, loss_weights=None):
         super().__init__()
         # Initialize the shared model for all tasks.
         self.model = MultiTaskFairFaceModel(num_classes_list=num_classes_per_task).to(self.device)
@@ -37,17 +37,12 @@ class FairFaceMultiTaskAgent(BaseAgent):
         else:
             self.loss_weights = loss_weights
 
+        self.task_names = task_names
+        self.multi_task_loss = loss_fn
+
+
     def train(self, train_data, test_data, num_epochs=50, lr=0.1, save_history=False, save_path='.', verbose=False):
         self.model.train()
-        
-        task_names = ['age', 'gender', 'race'] 
-
-        # Criterion for each task (loss function)
-        criterions = {
-            'age': nn.CrossEntropyLoss(reduction='mean'),
-            'gender': nn.CrossEntropyLoss(reduction='mean'),
-            'race': nn.CrossEntropyLoss(reduction='mean')
-        }
 
         optimizer = optim.SGD(self.model.parameters(), lr=lr)
 
@@ -55,7 +50,7 @@ class FairFaceMultiTaskAgent(BaseAgent):
         history = {
             'accuracy': [],
             'total_loss': [],
-            'task_loss': {task: [] for task in task_names}  # Storing task-specific losses
+            'task_loss': {task: [] for task in self.task_names}  # Storing task-specific losses
         }
 
         best_accuracy = 0.0  # Initialize best accuracy
@@ -64,7 +59,7 @@ class FairFaceMultiTaskAgent(BaseAgent):
 
         for epoch in range(num_epochs):
             epoch_loss = 0.0
-            task_losses = {task: 0.0 for task in task_names}
+            task_losses = {task: 0.0 for task in self.task_names}
 
             if verbose:
                 print(f"Epoch {epoch+1}/{num_epochs}")
@@ -76,17 +71,9 @@ class FairFaceMultiTaskAgent(BaseAgent):
 
                 optimizer.zero_grad()
                 
-                total_loss = 0
                 outputs = self.model(inputs)
-
-                for i, task in enumerate(task_names):
-                    output_for_task = outputs[task]
-                    labels_for_task = labels[task]
-
-                    loss = criterions[task](output_for_task, labels_for_task)
-                    task_losses[task] += loss.item()  # Store task-specific loss
-                    total_loss += self.loss_weights[i] * loss 
-
+                total_loss, task_losses = self.multi_task_loss.compute_loss(outputs, labels)
+                
                 total_loss.backward()
 
                 # Gradient Clipping
@@ -98,13 +85,14 @@ class FairFaceMultiTaskAgent(BaseAgent):
                 if verbose:
                     progress_bar.set_postfix(epoch_loss=epoch_loss)
 
+
             # Store metrics after each epoch
             history['total_loss'].append(epoch_loss)
             for task, loss in task_losses.items():
                 history['task_loss'][task].append(loss)
 
             # Evaluate after each epoch
-            eval_metrics = self.eval(test_data, task_names)  # Adjusting eval method for multi-task
+            eval_metrics = self.eval(test_data, self.task_names)  # Adjusting eval method for multi-task
             history['accuracy'].append(eval_metrics['accuracy'])
             
             # Check and save best model
