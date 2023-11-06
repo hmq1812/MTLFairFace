@@ -24,7 +24,7 @@ class MultiTaskLoss:
         return total_loss, task_losses
 
 
-class MissingLabelLoss:
+class PseudoLabelingLoss:
     def __init__(self, task_names, loss_weights=None, threshold=0.8):
         self.task_names = task_names
         self.threshold = threshold
