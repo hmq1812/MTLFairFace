@@ -79,6 +79,7 @@ class FairFaceLoader(BaseDataLoader):
         self.data_path = data_path
         self.label_path = label_path
 
+
         self.transform = transform if transform else torchvision.transforms.Compose([
             torchvision.transforms.ToTensor(),
             torchvision.transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
@@ -86,15 +87,13 @@ class FairFaceLoader(BaseDataLoader):
 
         # Create a dataset-like structure
         self.dataset = CustomDataset(data_path=self.data_path, label_path=self.label_path, transform=self.transform)
-
+        self._len = len(self.dataset)
         # You can further split your data into training and validation here if needed
 
         self.dataloader = torch.utils.data.DataLoader(self.dataset,
                                                       batch_size=batch_size,
                                                       shuffle=shuffle,
                                                       drop_last=drop_last)
-
-        self._len = len(self.label_path)
 
 
     def get_loader(self):
@@ -109,10 +108,12 @@ class FairFaceLoader(BaseDataLoader):
 
 if __name__ == "__main__":
         F = FairFaceLoader("Data/FairFaceData/fairface-img-margin025-trainval/", "Data/FairFaceData/fairface_label_val_encoded.csv", batch_size=16, shuffle=False, drop_last=False, transform=None)
-        print(F.dataset[1])
-        for inputs, labels in F:  # labels should be a list of labels for each task.
-            print(inputs)
-            print(labels)
-            break
+        # print(F.dataset[1])
+        # for inputs, labels in F:  # labels should be a list of labels for each task.
+        #     print(inputs)
+        #     print(labels)
+        #     break
+
+        print(len(F))
 
             

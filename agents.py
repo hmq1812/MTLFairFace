@@ -139,6 +139,11 @@ class FairFaceMultiTaskAgent(BaseAgent):
 
     def save_model(self, save_path='model.pth'):
         """Save the current model parameters to the specified path."""
+        
+        # Check if the directory of the save_path exists, if not create it
+        os.makedirs(os.path.dirname(save_path), exist_ok=True)
+        
+        # Save the model
         torch.save(self.model.state_dict(), save_path)
 
     def load_model(self, load_path='model.pth'):
