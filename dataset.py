@@ -17,7 +17,7 @@ class CustomDataset(torch.utils.data.dataset.Dataset):
 
     def __getitem__(self, idx):
         # Get the file name and labels
-        img_file, age, gender, race, _ = self.annotations.iloc[idx]
+        img_file, age, gender, race = self.annotations.loc[:, ['file', 'age', 'gender', 'race']].iloc[idx]
         img_name = os.path.join(self.data_path, img_file)
         image = Image.open(img_name)
         
@@ -81,6 +81,7 @@ class FairFaceLoader(BaseDataLoader):
 
 
         self.transform = transform if transform else torchvision.transforms.Compose([
+            torchvision.transforms.Resize((224, 224)),
             torchvision.transforms.ToTensor(),
             torchvision.transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
         ])

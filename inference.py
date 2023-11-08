@@ -38,9 +38,9 @@ def infer(args):
 
 
     # Define class names for each task
-    age_classes = ["0-2", "3-9", "10-19", "20-29", "30-39", "40-49", "50-59", "60-69", "70+"] 
-    gender_classes = ["Male", "Female"]
-    race_classes = ["White", "Black", "Asian", "Indian", "Southeast Asian", "Indian", "Middle Eastern"] 
+    age_classes = config.AGE_CLASSES
+    gender_classes = config.GENDER_CLASSES
+    race_classes = config.RACE_CLASSES
     
     task_class_names = {'age': age_classes, 'gender': gender_classes, 'race': race_classes}
 
