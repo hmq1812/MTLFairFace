@@ -43,38 +43,39 @@ class PseudoLabelingLoss:
             output = outputs[task]
             label = labels[task]
             
-            # Check if we have a label for this task
-            if label is not None:
-                softmax_output = F.softmax(output, dim=1)
-                max_prob, max_idx = torch.max(softmax_output, dim=1)
+            # Check if the label is not a special value indicating missing label
+            valid_label_mask = label != -1
+            
+            if valid_label_mask.any():
+                softmax_output = F.softmax(output[valid_label_mask], dim=1)
+                max_prob, _ = torch.max(softmax_output, dim=1)
+                pseudo_label_mask = max_prob > self.threshold
                 
-                # If the max probability is above the threshold, use normal loss
-                mask = max_prob > self.threshold
-                valid_samples = mask.sum().item()
+                valid_samples = pseudo_label_mask.sum().item()
                 
                 if valid_samples > 0:
-                    loss = self.loss_functions[task](output[mask], label[mask])
+                    # Only compute the loss for valid samples with pseudo labels
+                    loss = self.loss_functions[task](output[valid_label_mask][pseudo_label_mask], label[valid_label_mask][pseudo_label_mask])
                 else:
                     loss = torch.tensor(0.0).to(output.device)
                 
-                # For the rest, use entropy as a penalty
+                # Calculate entropy loss for samples without pseudo labels
+                entropy_loss = -torch.mean(torch.sum(F.softmax(output[valid_label_mask][~pseudo_label_mask], dim=1) 
+                                                    * F.log_softmax(output[valid_label_mask][~pseudo_label_mask], dim=1), dim=1))
+                # Combine the losses
+                loss += entropy_loss
+            else:
+                # If no valid label, just use entropy loss as a penalty
                 # Softmax: omputes the softmax of the model's output
                 # Log Softmax: improve numerical stability.
                 # Entropy Calculation: calculates the negative log likelihood for each class
                 # High entropy means that the model is uncertain in its predictions, as the probabilities are spread out across multiple classes
-                entropy_loss = -torch.mean(torch.sum(F.softmax(output[~mask], dim=1) 
-                                                    * F.log_softmax(output[~mask], dim=1), dim=1))
-                
-                
-                # Combine the losses
-                loss = loss + entropy_loss
-                
-            # If no label, just use entropy loss as a penalty
-            else:
                 loss = -torch.mean(torch.sum(F.softmax(output, dim=1) 
-                                             * F.log_softmax(output, dim=1), dim=1))
+                                            * F.log_softmax(output, dim=1), dim=1))
             
             task_losses[task] = loss.item()
             total_loss += self.loss_weights[task] * loss
             
         return total_loss, task_losses
+
+                
