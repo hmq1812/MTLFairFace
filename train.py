@@ -13,7 +13,7 @@ def parse_args():
 
 def train(args):
     train_data = FairFaceLoader(config.TRAIN_DATA_PATH, config.TRAIN_LABEL_FILE, batch_size=config.BATCH_SIZE)
-    test_data = FairFaceLoader(config.TEST_DATA_PATH, config.TRAIN_LABEL_FILE, batch_size=config.BATCH_SIZE)
+    test_data = FairFaceLoader(config.TEST_DATA_PATH, config.TEST_LABEL_FILE, batch_size=config.BATCH_SIZE)
     
     if args.missing_label:
         print('Using Loss Function for missing label data')
