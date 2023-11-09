@@ -108,13 +108,11 @@ class FairFaceLoader(BaseDataLoader):
 
 
 if __name__ == "__main__":
-        F = FairFaceLoader("Data/FairFaceData/fairface-img-margin025-trainval/", "Data/FairFaceData/fairface_label_val_encoded.csv", batch_size=16, shuffle=False, drop_last=False, transform=None)
-        # print(F.dataset[1])
-        # for inputs, labels in F:  # labels should be a list of labels for each task.
-        #     print(inputs)
-        #     print(labels)
-        #     break
-
-        print(len(F))
+        F = FairFaceLoader("Data/UTKface_Aligned_cropped/UTKFace", "Data/UTKface_Aligned_cropped/utk_label_train_encoded.csv", batch_size=16, shuffle=False, drop_last=False, transform=None)
+        print(F.dataset[1])
+        for inputs, labels in F:  # labels should be a list of labels for each task.
+            print(inputs)
+            print(labels)
+            break
 
             

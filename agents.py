@@ -4,8 +4,10 @@ import torch.optim as optim
 import os
 import csv
 from tqdm import tqdm
+from math import ceil
 
 from models import MultiTaskFairFaceModel
+import config
 
 
 class BaseAgent:
@@ -63,7 +65,7 @@ class FairFaceMultiTaskAgent(BaseAgent):
 
             if verbose:
                 print(f"Epoch {epoch+1}/{num_epochs}")
-                progress_bar = tqdm(train_data, total=len(train_data), desc='Training')
+                progress_bar = tqdm(train_data, total=ceil(len(train_data)/config.BATCH_SIZE), desc='Training')
 
             for inputs, labels in (progress_bar if verbose else train_data):
                 inputs = inputs.to(self.device)
