@@ -30,7 +30,7 @@ def map_age_to_group(age):
     elif age < 70:
         return '60-69'
     else:
-        return '70+'
+        return 'more than 70'
 
 # Define a function to map UTKFace gender to FairFace gender labels
 def map_gender_to_label(gender):
