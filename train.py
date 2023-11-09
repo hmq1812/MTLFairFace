@@ -17,7 +17,7 @@ def train(args):
     
     if args.missing_label:
         print('Using Loss Function for missing label data')
-        loss_fn = PseudoLabelingLoss(task_names=config.CLASS_NAME, loss_weights=config.LOSS_WEIGHT, threshold=config.ASSIGN_LABEL_THRESHOLD)
+        loss_fn = PseudoLabelingLoss(task_names=config.CLASS_NAME, loss_weights=config.LOSS_WEIGHT, threshold=config.ASSIGN_LABEL_THRESHOLD, entropy_weight=config.ENTROPY_WEIGHT)
     else:
         loss_fn = MultiTaskLoss(task_names=config.CLASS_NAME, loss_weights=config.LOSS_WEIGHT)
         
