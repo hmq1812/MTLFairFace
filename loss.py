@@ -70,8 +70,10 @@ class PseudoLabelingLoss:
                 # Log Softmax: improve numerical stability.
                 # Entropy Calculation: calculates the negative log likelihood for each class
                 # High entropy means that the model is uncertain in its predictions, as the probabilities are spread out across multiple classes
-                loss = -torch.mean(torch.sum(F.softmax(output, dim=1) 
-                                            * F.log_softmax(output, dim=1), dim=1))
+                epsilon = 1e-8
+                # add a small epsilon before taking the log to avoid log(0) which results in -inf
+                entropy_loss = -torch.mean(torch.sum(F.softmax(output[valid_label_mask][~pseudo_label_mask], dim=1) * torch.log(F.softmax(output[valid_label_mask][~pseudo_label_mask], dim=1) + epsilon), dim=1))
+
             
             task_losses[task] = loss.item()
             total_loss += self.loss_weights[task] * loss
