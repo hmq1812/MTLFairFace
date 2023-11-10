@@ -130,6 +130,10 @@ class FairFaceMultiTaskAgent(BaseAgent):
 
             if verbose:
                 print(f"Epoch {epoch+1} - Train Loss: {epoch_loss / sum(task_sample_counters.values()):.4f}, Train Accuracy: {overall_train_accuracy:.4f}, Val Accuracy: {val_eval_metrics['accuracy']:.4f}")
+                for task in self.task_names:
+                    train_task_accuracy = task_accuracies[task] / task_sample_counters[task]
+                    val_task_accuracy = val_eval_metrics['task_accuracies'][task]
+                    print(f"{task.capitalize()} - Train Task Loss: {task_losses[task]:.4f}, Train Task Accuracy: {train_task_accuracy:.4f}, Val Task Accuracy: {val_task_accuracy:.4f}")
 
         # Save the last model after all epochs are complete
         self.save_model(last_model_path)
