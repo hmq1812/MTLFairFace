@@ -2,7 +2,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import argparse
 
-def plot_training_logs(df, output_path='training_visualization.png'):
+def plot_training_logs(df):
     # Create a figure with three subplots, one for each required plot
     fig, axs = plt.subplots(3, 1, figsize=(10, 15))
 
@@ -29,15 +29,15 @@ def plot_training_logs(df, output_path='training_visualization.png'):
 
     # Adjust layout for better fit
     plt.tight_layout()
-    plt.savefig(output_path, dpi=300)
+    plt.savefig(args.csv_path.split('.')[0] + '.png', dpi=300)
     plt.close()
 
-def main(csv_path, output_path):
+def main(csv_path):
     try:
         # Read the training log CSV file into a pandas DataFrame
         df = pd.read_csv(csv_path)
         # Plot and save the figures in a single image
-        plot_training_logs(df, output_path)
+        plot_training_logs(df)
     except FileNotFoundError:
         print(f"The file {csv_path} was not found. Please check the path and try again.")
     except pd.errors.EmptyDataError:
@@ -48,7 +48,6 @@ def main(csv_path, output_path):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Visualize training log.')
     parser.add_argument('-i', '--csv_path', type=str, default='training_history.csv', help='Path to the training log CSV file.')
-    parser.add_argument('-o', '--output_path', type=str, default='training_visualization.png', help='Output path for the combined visualization image.')
 
     args = parser.parse_args()
-    main(args.csv_path, args.output_path)
+    main(args.csv_path)
