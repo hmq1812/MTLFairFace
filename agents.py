@@ -14,7 +14,7 @@ class BaseAgent:
     def __init__(self):
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-    def train(self, train_data, test_data, num_epochs, save_history, save_path, verbose):
+    def train(self, train_data, val_data, num_epochs, save_history, save_path, verbose):
         raise NotImplementedError
 
     def eval(self, data):
@@ -43,7 +43,7 @@ class FairFaceMultiTaskAgent(BaseAgent):
         self.multi_task_loss = loss_fn
 
 
-    def train(self, train_data, test_data, num_epochs=50, lr=0.1, save_history=False, save_path='.', verbose=False):
+    def train(self, train_data, val_data, num_epochs=50, lr=0.1, save_history=False, save_path='.', verbose=False):
         self.model.train()
 
         optimizer = optim.SGD(self.model.parameters(), lr=lr)
@@ -94,7 +94,7 @@ class FairFaceMultiTaskAgent(BaseAgent):
                 history['task_loss'][task].append(loss)
 
             # Evaluate after each epoch
-            eval_metrics = self.eval(test_data, self.task_names)  # Adjusting eval method for multi-task
+            eval_metrics = self.eval(val_data, self.task_names)  # Adjusting eval method for multi-task
             history['accuracy'].append(eval_metrics['accuracy'])
             
             # Check and save best model

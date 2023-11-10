@@ -32,3 +32,4 @@ def process_csv(input_file_path, output_file_path):
 if __name__ == "__main__":
     process_csv('Data/FairFaceData/fairface_label_train.csv', 'Data/FairFaceData/fairface_label_train_encoded.csv')
     process_csv('Data/FairFaceData/fairface_label_val.csv', 'Data/FairFaceData/fairface_label_val_encoded.csv')
+    process_csv('Data/FairFaceData/fairface_label_test.csv', 'Data/FairFaceData/fairface_label_test_encoded.csv')

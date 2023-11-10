@@ -3,8 +3,10 @@
 .idea/
 
 # DATA FOLDER
-Data/
-FairFaceData/
+Data/FairFaceData/fairface-img-margin025-trainval
+Data/FairFaceData/fairface-img-margin125-trainval
+Data/UTKface_Aligned_cropped/crop_part1
+Data/UTKface_Aligned_cropped/UTKFace
 
 # Vagrant
 .vagrant/
