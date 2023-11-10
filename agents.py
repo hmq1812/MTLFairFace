@@ -17,7 +17,23 @@ class BaseAgent:
     def train(self, train_data, val_data, num_epochs, save_history, save_path, verbose):
         raise NotImplementedError
 
-    def eval(self, data):
+    def eval(self, data, task_names):
+        raise NotImplementedError
+
+    def save_model(self, save_path):
+        pass
+
+    def load_model(self, save_path):
+        pass
+
+class BaseAgent:
+    def __init__(self):
+        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
+    def train(self, train_data, val_data, num_epochs, save_history, save_path, verbose):
+        raise NotImplementedError
+
+    def eval(self, data_loader, task_names):
         raise NotImplementedError
 
     def save_model(self, save_path):
@@ -30,42 +46,39 @@ class BaseAgent:
 class FairFaceMultiTaskAgent(BaseAgent):
     def __init__(self, loss_fn, task_names, num_classes_per_task, loss_weights=None):
         super().__init__()
-        # Initialize the shared model for all tasks.
         self.model = MultiTaskFairFaceModel(num_classes_list=num_classes_per_task, dropout_rate=config.DROPOUT_RATE).to(self.device)
 
-        # Set loss weights if provided, else equal weighting.
         if loss_weights is None:
-            self.loss_weights = [1. / len(num_classes_per_task)] * len(num_classes_per_task)
+            self.loss_weights = {task: 1. / len(task_names) for task in task_names}
         else:
             self.loss_weights = loss_weights
 
         self.task_names = task_names
         self.multi_task_loss = loss_fn
 
-
     def train(self, train_data, val_data, num_epochs=50, lr=0.1, save_history=False, save_path='.', verbose=False):
         self.model.train()
-
         optimizer = optim.SGD(self.model.parameters(), lr=lr)
 
-        # Set up storage for metrics
+        # Storage for metrics
         history = {
             'train_accuracy': [],
             'val_accuracy': [],
+            'train_task_accuracy': {task: [] for task in self.task_names},
+            'val_task_accuracy': {task: [] for task in self.task_names},
             'total_loss': [],
-            'task_loss': {task: [] for task in self.task_names},  # Storing task-specific losses
-            'task_accuracy': {task: [] for task in self.task_names}  # Storing task-specific accuracies
+            'task_loss': {task: [] for task in self.task_names},
         }
 
-        best_accuracy = 0.0  # Initialize best accuracy
-        best_model_path = os.path.join(save_path, 'best_model.pth')  # Path to save the best model
-        last_model_path = os.path.join(save_path, 'last_model.pth')  # Path to save the last model
+        best_accuracy = 0.0
+        best_model_path = os.path.join(save_path, 'best_model.pth')
+        last_model_path = os.path.join(save_path, 'last_model.pth')
 
         for epoch in range(num_epochs):
             epoch_loss = 0.0
             task_losses = {task: 0.0 for task in self.task_names}
-            task_accuracies = {task: 0.0 for task in self.task_names}
-            total_samples = 0
+            task_accuracies = {task: 0 for task in self.task_names}
+            task_sample_counters = {task: 0 for task in self.task_names}
 
             if verbose:
                 print(f"Epoch {epoch+1}/{num_epochs}")
@@ -81,48 +94,42 @@ class FairFaceMultiTaskAgent(BaseAgent):
                 total_loss, task_losses = self.multi_task_loss.compute_loss(outputs, labels)
                 
                 total_loss.backward()
-
-                # Gradient Clipping
                 torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=1.0)
-      
                 optimizer.step()
                 epoch_loss += total_loss.item()
 
-                if verbose:
-                    progress_bar.set_postfix(epoch_loss=epoch_loss)
-
-                # Calculate training task-specific accuracies
+                # Calculate task-specific accuracies
                 for task in self.task_names:
                     _, predicted = torch.max(outputs[task], 1)
                     correct = (predicted == labels[task]).sum().item()
                     task_accuracies[task] += correct
-                    total_samples += labels[task].size(0)
+                    task_sample_counters[task] += labels[task].size(0)
 
-            # Store training metrics after each epoch
-            history['total_loss'].append(epoch_loss / total_samples)
-            for task, loss in task_losses.items():
-                history['task_loss'][task].append(loss / total_samples)
-                history['task_accuracy'][task].append(task_accuracies[task] / total_samples)
+                if verbose:
+                    progress_bar.set_postfix(epoch_loss=epoch_loss)
 
-            # Calculate and store overall training accuracy
-            overall_train_accuracy = sum(task_accuracies.values()) / (len(self.task_names) * total_samples)
+            # Store metrics after each epoch
+            for task in self.task_names:
+                history['train_task_accuracy'][task].append(task_accuracies[task] / task_sample_counters[task])
+
+            overall_train_accuracy = sum(task_accuracies.values()) / sum(task_sample_counters.values())
             history['train_accuracy'].append(overall_train_accuracy)
 
-            # Evaluate after each epoch
-            eval_metrics = self.eval(val_data, self.task_names)  # Adjusting eval method for multi-task
-            history['val_accuracy'].append(eval_metrics['accuracy'])
+            # Evaluate on validation set
+            val_eval_metrics = self.eval(val_data, self.task_names)
+            history['val_accuracy'].append(val_eval_metrics['accuracy'])
+            for task in self.task_names:
+                history['val_task_accuracy'][task].append(val_eval_metrics['task_accuracies'][task])
 
-            # Check and save best model
-            if eval_metrics['accuracy'] > best_accuracy:
-                best_accuracy = eval_metrics['accuracy']
-                self.save_model(best_model_path)  # Save the current best model
+            # Check and save the best model
+            if val_eval_metrics['accuracy'] > best_accuracy:
+                best_accuracy = val_eval_metrics['accuracy']
+                self.save_model(best_model_path)
                 if verbose:
                     print(f"Best model updated with accuracy: {best_accuracy:.4f} at epoch {epoch+1}")
 
             if verbose:
-                print(f"Epoch {epoch+1} - Train Loss: {epoch_loss / total_samples:.4f}, Train Accuracy: {overall_train_accuracy:.4f}, Val Accuracy: {eval_metrics['accuracy']:.4f}")
-                for task in self.task_names:
-                    print(f"{task.capitalize()} Task Loss: {task_losses[task] / total_samples:.4f}, Task Accuracy: {task_accuracies[task] / total_samples:.4f}")
+                print(f"Epoch {epoch+1} - Train Loss: {epoch_loss / sum(task_sample_counters.values()):.4f}, Train Accuracy: {overall_train_accuracy:.4f}, Val Accuracy: {val_eval_metrics['accuracy']:.4f}")
 
         # Save the last model after all epochs are complete
         self.save_model(last_model_path)
@@ -130,40 +137,30 @@ class FairFaceMultiTaskAgent(BaseAgent):
         if save_history:
             self._save_history(history, save_path)
 
-
-
     def _save_history(self, history, save_path):
         if not os.path.isdir(save_path):
             os.makedirs(save_path)
 
-        # Define CSV filename
         filename = os.path.join(save_path, 'training_history.csv')
+        headers = ['epoch', 'total_loss', 'train_accuracy', 'val_accuracy'] \
+                  + [f"{task}_task_loss" for task in self.task_names] \
+                  + [f"{task}_train_accuracy" for task in self.task_names] \
+                  + [f"{task}_val_accuracy" for task in self.task_names]
 
-        # Define the CSV column headers
-        headers = [
-            'epoch',
-            'total_loss',
-            'train_accuracy',
-            'val_accuracy'
-        ] + [f"{task}_task_loss" for task in history['task_loss'].keys()] \
-        + [f"{task}_task_accuracy" for task in history['task_accuracy'].keys()]
-
-        # Write to CSV
         with open(filename, 'w', newline='') as file:
             writer = csv.writer(file)
             writer.writerow(headers)
 
-            for epoch in range(len(history['accuracy'])):
-                row = [
-                    epoch+1,
-                    history['total_loss'][epoch],
-                    history['train_accuracy'][epoch],
-                    history['val_accuracy'][epoch]
-                ]
-                row += [history['task_loss'][task][epoch] for task in self.task_names]
-                row += [history['task_accuracy'][task][epoch] for task in self.task_names]
+            num_epochs = len(history['train_accuracy'])
+            for epoch in range(num_epochs):
+                row = [epoch+1,
+                       history['total_loss'][epoch],
+                       history['train_accuracy'][epoch],
+                       history['val_accuracy'][epoch]] \
+                      + [history['task_loss'][task][epoch] for task in self.task_names] \
+                      + [history['train_task_accuracy'][task][epoch] for task in self.task_names] \
+                      + [history['val_task_accuracy'][task][epoch] for task in self.task_names]
                 writer.writerow(row)
-
 
 
     def save_model(self, save_path='model.pth'):
@@ -187,7 +184,7 @@ class FairFaceMultiTaskAgent(BaseAgent):
         self.model.eval()
 
         total_correct = {task: 0 for task in task_names}
-        total_samples = 0
+        task_sample_counts = {task: 0 for task in task_names}
 
         with torch.no_grad():
             for inputs, labels in data_loader:
@@ -197,18 +194,23 @@ class FairFaceMultiTaskAgent(BaseAgent):
                 outputs = self.model(inputs)
 
                 for task in task_names:
-                    _, predicted = torch.max(outputs[task], 1)
-                    correct = (predicted == labels[task]).sum().item()
+                    if len(labels[task]) > 0:  # Check if there are labels for the task
+                        _, predicted = torch.max(outputs[task], 1)
+                        correct = (predicted == labels[task]).sum().item()
+                        total_correct[task] += correct
+                        task_sample_counts[task] += labels[task].size(0)  # Count samples for each task separately
 
-                    total_correct[task] += correct
+        # Calculate accuracy for each task
+        accuracies = {task: (total_correct[task] / task_sample_counts[task]) if task_sample_counts[task] > 0 else 0 for task in task_names}
 
-                total_samples += labels[task_names[0]].size(0) 
-
-        # Calculate accuracy for each task and the overall accuracy
-        accuracies = {task: correct / total_samples for task, correct in total_correct.items()}
-        overall_accuracy = sum(accuracies.values()) / len(accuracies)
+        # Calculate the overall accuracy
+        if sum(task_sample_counts.values()) > 0:
+            overall_accuracy = sum(total_correct.values()) / sum(task_sample_counts.values())
+        else:
+            overall_accuracy = 0  # Prevent division by zero
 
         return {'accuracy': overall_accuracy, 'task_accuracies': accuracies}
+
 
 if __name__ == "__main__":
     pass
