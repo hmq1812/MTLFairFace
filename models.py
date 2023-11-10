@@ -2,15 +2,14 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torchvision import models
-from torchvision.models import ResNet34_Weights
+from torchvision.models import ResNet50_Weights
 
-# MTL FAIRFACE MODEL 
 
 class MultiTaskFairFaceModel(nn.Module):
-    def __init__(self, num_classes_list):
+    def __init__(self, num_classes_list, dropout_rate=0.5):
         super(MultiTaskFairFaceModel, self).__init__()
         # Load a pre-trained ResNet-34 model
-        shared_backbone = models.resnet34(weights=ResNet34_Weights.DEFAULT)
+        shared_backbone = models.resnet50(weights=ResNet50_Weights.DEFAULT)
 
         # Remove the fully connected layer
         modules = list(shared_backbone.children())[:-1]  # all layers except the last fully connected layer
@@ -23,22 +22,27 @@ class MultiTaskFairFaceModel(nn.Module):
         # Task-specific layers, Each task will have its own classification head
         self.age_layer = nn.Sequential(
             nn.Linear(output_feature_size, 128),
+            nn.BatchNorm1d(128),  # Batch Normalization layer
             nn.ReLU(),
+            nn.Dropout(p=dropout_rate),  # Dropout layer
             nn.Linear(128, num_age)
         )
 
         self.gender_layer = nn.Sequential(
             nn.Linear(output_feature_size, 128),
+            nn.BatchNorm1d(128),  # Batch Normalization layer
             nn.ReLU(),
+            nn.Dropout(p=dropout_rate),  # Dropout layer
             nn.Linear(128, num_gender)
         )
         
         self.race_layer = nn.Sequential(
             nn.Linear(output_feature_size, 128),
+            nn.BatchNorm1d(128),  # Batch Normalization layer
             nn.ReLU(),
+            nn.Dropout(p=dropout_rate),  # Dropout layer
             nn.Linear(128, num_race)  
         )
-
 
     def forward(self, x):
         # Forward pass through the shared backbone

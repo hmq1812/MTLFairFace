@@ -31,7 +31,7 @@ class FairFaceMultiTaskAgent(BaseAgent):
     def __init__(self, loss_fn, task_names, num_classes_per_task, loss_weights=None):
         super().__init__()
         # Initialize the shared model for all tasks.
-        self.model = MultiTaskFairFaceModel(num_classes_list=num_classes_per_task).to(self.device)
+        self.model = MultiTaskFairFaceModel(num_classes_list=num_classes_per_task, dropout_rate=config.DROPOUT_RATE).to(self.device)
 
         # Set loss weights if provided, else equal weighting.
         if loss_weights is None:
@@ -50,9 +50,11 @@ class FairFaceMultiTaskAgent(BaseAgent):
 
         # Set up storage for metrics
         history = {
-            'accuracy': [],
+            'train_accuracy': [],
+            'val_accuracy': [],
             'total_loss': [],
-            'task_loss': {task: [] for task in self.task_names}  # Storing task-specific losses
+            'task_loss': {task: [] for task in self.task_names},  # Storing task-specific losses
+            'task_accuracy': {task: [] for task in self.task_names}  # Storing task-specific accuracies
         }
 
         best_accuracy = 0.0  # Initialize best accuracy
@@ -62,6 +64,8 @@ class FairFaceMultiTaskAgent(BaseAgent):
         for epoch in range(num_epochs):
             epoch_loss = 0.0
             task_losses = {task: 0.0 for task in self.task_names}
+            task_accuracies = {task: 0.0 for task in self.task_names}
+            total_samples = 0
 
             if verbose:
                 print(f"Epoch {epoch+1}/{num_epochs}")
@@ -87,16 +91,27 @@ class FairFaceMultiTaskAgent(BaseAgent):
                 if verbose:
                     progress_bar.set_postfix(epoch_loss=epoch_loss)
 
+                # Calculate training task-specific accuracies
+                for task in self.task_names:
+                    _, predicted = torch.max(outputs[task], 1)
+                    correct = (predicted == labels[task]).sum().item()
+                    task_accuracies[task] += correct
+                    total_samples += labels[task].size(0)
 
-            # Store metrics after each epoch
-            history['total_loss'].append(epoch_loss)
+            # Store training metrics after each epoch
+            history['total_loss'].append(epoch_loss / total_samples)
             for task, loss in task_losses.items():
-                history['task_loss'][task].append(loss)
+                history['task_loss'][task].append(loss / total_samples)
+                history['task_accuracy'][task].append(task_accuracies[task] / total_samples)
+
+            # Calculate and store overall training accuracy
+            overall_train_accuracy = sum(task_accuracies.values()) / (len(self.task_names) * total_samples)
+            history['train_accuracy'].append(overall_train_accuracy)
 
             # Evaluate after each epoch
             eval_metrics = self.eval(val_data, self.task_names)  # Adjusting eval method for multi-task
-            history['accuracy'].append(eval_metrics['accuracy'])
-            
+            history['val_accuracy'].append(eval_metrics['accuracy'])
+
             # Check and save best model
             if eval_metrics['accuracy'] > best_accuracy:
                 best_accuracy = eval_metrics['accuracy']
@@ -105,15 +120,16 @@ class FairFaceMultiTaskAgent(BaseAgent):
                     print(f"Best model updated with accuracy: {best_accuracy:.4f} at epoch {epoch+1}")
 
             if verbose:
-                print(f"Epoch {epoch+1} - Loss: {epoch_loss:.4f}, Accuracy: {eval_metrics['accuracy']:.4f}")
-                for task, loss in task_losses.items():
-                    print(f"{task.capitalize()} Task Loss: {loss:.4f}")
+                print(f"Epoch {epoch+1} - Train Loss: {epoch_loss / total_samples:.4f}, Train Accuracy: {overall_train_accuracy:.4f}, Val Accuracy: {eval_metrics['accuracy']:.4f}")
+                for task in self.task_names:
+                    print(f"{task.capitalize()} Task Loss: {task_losses[task] / total_samples:.4f}, Task Accuracy: {task_accuracies[task] / total_samples:.4f}")
 
         # Save the last model after all epochs are complete
         self.save_model(last_model_path)
         
         if save_history:
             self._save_history(history, save_path)
+
 
 
     def _save_history(self, history, save_path):
@@ -124,7 +140,13 @@ class FairFaceMultiTaskAgent(BaseAgent):
         filename = os.path.join(save_path, 'training_history.csv')
 
         # Define the CSV column headers
-        headers = ['epoch', 'total_loss', 'accuracy'] + [f"{task}_task_loss" for task in history['task_loss'].keys()]
+        headers = [
+            'epoch',
+            'total_loss',
+            'train_accuracy',
+            'val_accuracy'
+        ] + [f"{task}_task_loss" for task in history['task_loss'].keys()] \
+        + [f"{task}_task_accuracy" for task in history['task_accuracy'].keys()]
 
         # Write to CSV
         with open(filename, 'w', newline='') as file:
@@ -132,9 +154,14 @@ class FairFaceMultiTaskAgent(BaseAgent):
             writer.writerow(headers)
 
             for epoch in range(len(history['accuracy'])):
-                row = [epoch+1, history['total_loss'][epoch], history['accuracy'][epoch]]
-                for task, losses in history['task_loss'].items():
-                    row.append(losses[epoch])
+                row = [
+                    epoch+1,
+                    history['total_loss'][epoch],
+                    history['train_accuracy'][epoch],
+                    history['val_accuracy'][epoch]
+                ]
+                row += [history['task_loss'][task][epoch] for task in self.task_names]
+                row += [history['task_accuracy'][task][epoch] for task in self.task_names]
                 writer.writerow(row)
 
 
