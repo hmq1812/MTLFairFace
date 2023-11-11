@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.optim as optim
+import torch.optim.lr_scheduler as lr_scheduler
 import os
 import csv
 from tqdm import tqdm
@@ -8,6 +9,27 @@ from math import ceil
 
 from models import MultiTaskFairFaceModel
 import config
+
+
+class EarlyStopping:
+    def __init__(self, patience=7, min_delta=0):
+        self.patience = patience
+        self.min_delta = min_delta
+        self.counter = 0
+        self.best_score = None
+        self.early_stop = False
+
+    def __call__(self, val_metric):
+        if self.best_score is None:
+            self.best_score = val_metric
+        elif self.best_score - val_metric > self.min_delta:
+            self.counter += 1
+            print(f"EarlyStopping counter: {self.counter} out of {self.patience}")
+            if self.counter >= self.patience:
+                self.early_stop = True
+        else:
+            self.best_score = val_metric
+            self.counter = 0
 
 
 class BaseAgent:
@@ -42,7 +64,12 @@ class FairFaceMultiTaskAgent(BaseAgent):
 
     def train(self, train_data, val_data, num_epochs=50, lr=0.1, save_history=False, save_path='.', verbose=False):
         self.model.train()
-        optimizer = optim.SGD(self.model.parameters(), lr=lr)
+        # optimizer = optim.SGD(self.model.parameters(), lr=lr)
+        optimizer = optim.Adam(self.model.parameters(), lr=lr)
+
+        scheduler = lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.1)
+
+        early_stopping = EarlyStopping(patience=10, min_delta=0.01)  
 
         # Storage for metrics
         history = {
@@ -114,6 +141,8 @@ class FairFaceMultiTaskAgent(BaseAgent):
             if val_eval_metrics['accuracy'] > best_accuracy:
                 best_accuracy = val_eval_metrics['accuracy']
                 self.save_model(best_model_path)
+                if save_history:
+                    self._save_history(history, save_path)
                 if verbose:
                     print(f"Best model updated with accuracy: {best_accuracy:.4f} at epoch {epoch+1}")
 
@@ -123,6 +152,17 @@ class FairFaceMultiTaskAgent(BaseAgent):
                     train_task_accuracy = task_accuracies[task] / task_sample_counters[task]
                     val_task_accuracy = val_eval_metrics['task_accuracies'][task]
                     print(f"{task.capitalize()} - Train Task Loss: {task_losses[task] / task_sample_counters[task]:.4f}, Train Task Accuracy: {train_task_accuracy:.4f}, Val Task Accuracy: {val_task_accuracy:.4f}")
+            
+            # Early stopping
+            early_stopping(val_eval_metrics['accuracy'])
+            if early_stopping.early_stop:
+                print("Early stopping triggered")
+                break
+
+            # Step the scheduler at the end of each epoch
+            scheduler.step()
+            if verbose:
+                print(f"Current LR: {scheduler.get_last_lr()}")
 
         # Save the last model after all epochs are complete
         self.save_model(last_model_path)
