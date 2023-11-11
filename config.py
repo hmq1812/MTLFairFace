@@ -7,10 +7,10 @@ CLASS_NAME = ['age', 'gender', 'race']
 CLASS_LIST = [9, 2, 7]
 
 # Paths
-TRAIN_DATA_PATH = "Data/FairFaceData/fairface-img-margin025-trainval/"
-TRAIN_LABEL_FILE = "Data/FairFaceData/fairface_label_train_encoded.csv"
-# TRAIN_DATA_PATH = "Data/UTKface_Aligned_cropped/UTKFace/"
-# TRAIN_LABEL_FILE = "Data/UTKface_Aligned_cropped/utk_label_train_encoded.csv"
+# TRAIN_DATA_PATH = "Data/FairFaceData/fairface-img-margin025-trainval/"
+# TRAIN_LABEL_FILE = "Data/FairFaceData/fairface_label_train_encoded.csv"
+TRAIN_DATA_PATH = "Data/UTKface_Aligned_cropped/UTKFace/"
+TRAIN_LABEL_FILE = "Data/UTKface_Aligned_cropped/utk_label_train_encoded.csv"
 
 VAL_DATA_PATH = "Data/FairFaceData/fairface-img-margin025-trainval/"
 VAL_LABEL_FILE = "Data/FairFaceData/fairface_label_val_encoded.csv"
@@ -19,7 +19,7 @@ TEST_DATA_PATH = "Data/FairFaceData/fairface-img-margin025-trainval/"
 TEST_LABEL_FILE = "Data/FairFaceData/fairface_label_test_encoded.csv"
 
 SAVE_PATH = "model"
-MODEL_PATH = "model/best_model_101123.pth"
+MODEL_PATH = "model/best_model_111123.pth"
 
 # Model Parameters
 LOSS_WEIGHT = None

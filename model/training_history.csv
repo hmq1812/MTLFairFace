@@ -1,1 +1,0 @@
-epoch,total_loss,train_accuracy,val_accuracy,age_task_loss,gender_task_loss,race_task_loss,age_train_accuracy,gender_train_accuracy,race_train_accuracy,age_val_accuracy,gender_val_accuracy,race_val_accuracy
