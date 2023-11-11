@@ -2,14 +2,16 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torchvision import models
-from torchvision.models import ResNet50_Weights
+from torchvision.models import ResNet50_Weights, EfficientNet_V2_M_Weights
 
 
 class MultiTaskFairFaceModel(nn.Module):
     def __init__(self, num_classes_list, dropout_rate=0.5):
         super(MultiTaskFairFaceModel, self).__init__()
         # Load a pre-trained ResNet-34 model
-        shared_backbone = models.resnet50(weights=ResNet50_Weights.DEFAULT)
+        # shared_backbone = models.resnet50(weights=ResNet50_Weights.DEFAULT)
+        shared_backbone = models.resnet50(weights=ResNet50_Weights.IMAGENET1K_V2)
+        # shared_backbone = models.efficientnet_v2_m(weights=EfficientNet_V2_M_Weights.IMAGENET1K_V1)
 
         # Remove the fully connected layer
         modules = list(shared_backbone.children())[:-1]  # all layers except the last fully connected layer
