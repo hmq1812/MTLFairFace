@@ -4,6 +4,7 @@ import torchvision
 import pandas as pd
 from PIL import Image
 from sklearn.preprocessing import LabelEncoder
+from math import ceil
 
 class CustomDataset(torch.utils.data.dataset.Dataset):
     def __init__(self, data_path, label_path, transform=None):
@@ -88,7 +89,7 @@ class FairFaceLoader(BaseDataLoader):
 
         # Create a dataset-like structure
         self.dataset = CustomDataset(data_path=self.data_path, label_path=self.label_path, transform=self.transform)
-        self._len = len(self.dataset)
+        self._len = len(self.dataset)//batch_size if drop_last else ceil(len(self.dataset)//batch_size)
         # You can further split your data into training and validation here if needed
 
         self.dataloader = torch.utils.data.DataLoader(self.dataset,

@@ -2,42 +2,71 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import argparse
 
-def plot_training_logs(df):
-    # Create a figure with three subplots, one for each required plot
-    fig, axs = plt.subplots(3, 1, figsize=(10, 15))
+import pandas as pd
+import matplotlib.pyplot as plt
 
-    # Total Loss
-    axs[0].plot(df['epoch'], df['total_loss'], marker='o', linestyle='-')
-    axs[0].set_title('Total Loss over Epochs')
-    axs[0].set_xlabel('Epoch')
-    axs[0].set_ylabel('Total Loss')
+def plot_total_loss(data, ax):
+    ax.plot(data['epoch'], data['total_loss'], label='Total Loss')
+    ax.set_xlabel('Epoch')
+    ax.set_ylabel('Total Loss')
+    ax.set_title('Total Loss')
+    ax.legend()
 
-    # Accuracy
-    axs[1].plot(df['epoch'], df['accuracy'], marker='o', color='green', linestyle='-')
-    axs[1].set_title('Accuracy over Epochs')
-    axs[1].set_xlabel('Epoch')
-    axs[1].set_ylabel('Accuracy')
+def plot_train_val_accuracy(data, ax):
+    ax.plot(data['epoch'], data['train_accuracy'], label='Train Accuracy')
+    ax.plot(data['epoch'], data['val_accuracy'], label='Validation Accuracy')
+    ax.set_xlabel('Epoch')
+    ax.set_ylabel('Accuracy')
+    ax.set_title('Train vs Validation Accuracy')
+    ax.legend()
 
-    # Task Losses
-    axs[2].plot(df['epoch'], df['age_task_loss'], marker='o', linestyle='-', label='Age Task Loss')
-    axs[2].plot(df['epoch'], df['gender_task_loss'], marker='o', linestyle='-', label='Gender Task Loss')
-    axs[2].plot(df['epoch'], df['race_task_loss'], marker='o', linestyle='-', label='Race Task Loss')
-    axs[2].set_title('Task-specific Losses over Epochs')
-    axs[2].set_xlabel('Epoch')
-    axs[2].set_ylabel('Task Loss')
-    axs[2].legend()
+def plot_task_losses(data, ax):
+    ax.plot(data['epoch'], data['age_task_loss'], label='Age Task Loss', color='red')
+    ax.plot(data['epoch'], data['gender_task_loss'], label='Gender Task Loss', color='green')
+    ax.plot(data['epoch'], data['race_task_loss'], label='Race Task Loss', color='purple')
+    ax.set_xlabel('Epoch')
+    ax.set_ylabel('Task Loss')
+    ax.set_title('Task Losses')
+    ax.legend()
 
-    # Adjust layout for better fit
+
+def plot_accuracies(data, ax):
+    tasks = ['age', 'gender', 'race']  # Replace with your actual task names
+    colors = {'age': 'red', 'gender': 'green', 'race': 'purple'}
+
+    for task in tasks:
+        ax.plot(data['epoch'], data[f'{task}_train_accuracy'], color=colors[task], label=f'Training Accuracy {task}')
+        ax.plot(data['epoch'], data[f'{task}_val_accuracy'], color=colors[task], linestyle='dashed', label=f'Validation Accuracy {task}')
+
+    ax.set_title('Training and Validation Accuracy for Each Task')
+    ax.set_xlabel('Epochs')
+    ax.set_ylabel('Accuracy')
+    ax.legend()
+
+def create_plots(data):
+    plt.figure(figsize=(15, 10))
+
+    ax1 = plt.subplot(2, 2, 1)
+    plot_total_loss(data, ax1)
+
+    ax2 = plt.subplot(2, 2, 2)
+    plot_task_losses(data, ax2)
+
+    ax3 = plt.subplot(2, 2, 3)
+    plot_train_val_accuracy(data, ax3)
+
+    ax4 = plt.subplot(2, 2, 4)
+    plot_accuracies(data, ax4)
+
     plt.tight_layout()
-    plt.savefig(args.csv_path.split('.')[0] + '.png', dpi=300)
-    plt.close()
+    plt.savefig('training_metrics.png')
+
 
 def main(csv_path):
     try:
-        # Read the training log CSV file into a pandas DataFrame
-        df = pd.read_csv(csv_path)
-        # Plot and save the figures in a single image
-        plot_training_logs(df)
+        # Load data from CSV
+        data = pd.read_csv(csv_path)
+        create_plots(data)
     except FileNotFoundError:
         print(f"The file {csv_path} was not found. Please check the path and try again.")
     except pd.errors.EmptyDataError:
