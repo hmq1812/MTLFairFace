@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torchvision import models
-from torchvision.models import ResNet50_Weights, EfficientNet_V2_M_Weights
+from torchvision.models import ResNet50_Weights, EfficientNet_V2_S_Weights
 
 
 class MultiTaskFairFaceModel(nn.Module):
@@ -20,7 +20,7 @@ class MultiTaskFairFaceModel(nn.Module):
         # output_feature_size = shared_backbone.fc.in_features  # get the no. of in_features in fc layer
 
         # Load a pre-trained EfficientNetV2 model
-        shared_backbone = models.efficientnet_v2_m(weights=EfficientNet_V2_M_Weights.IMAGENET1K_V1)
+        shared_backbone = models.efficientnet_v2_s(weights=EfficientNet_V2_S_Weights.IMAGENET1K_V1)
 
         # Remove the classifier (fully connected layer)
         self.shared_backbone = nn.Sequential(*list(shared_backbone.children())[:-1])
