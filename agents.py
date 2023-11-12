@@ -67,9 +67,9 @@ class FairFaceMultiTaskAgent(BaseAgent):
         # optimizer = optim.SGD(self.model.parameters(), lr=lr)
         optimizer = optim.Adam(self.model.parameters(), lr=lr)
 
-        scheduler = lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.1)
+        # scheduler = lr_scheduler.StepLR(optimizer, step_size=25, gamma=0.1)
 
-        early_stopping = EarlyStopping(patience=10, min_delta=0.01)  
+        early_stopping = EarlyStopping(patience=5, min_delta=0.1)  
 
         # Storage for metrics
         history = {
@@ -160,9 +160,9 @@ class FairFaceMultiTaskAgent(BaseAgent):
                 break
 
             # Step the scheduler at the end of each epoch
-            scheduler.step()
-            if verbose:
-                print(f"Current LR: {scheduler.get_last_lr()}")
+            # scheduler.step()
+            # if verbose:
+            #     print(f"Current LR: {scheduler.get_last_lr()}")
 
         # Save the last model after all epochs are complete
         self.save_model(last_model_path)
