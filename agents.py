@@ -12,24 +12,22 @@ import config
 
 
 class EarlyStopping:
-    def __init__(self, patience=7, min_delta=0):
+    def __init__(self, patience=5, min_delta=0.1):
         self.patience = patience
         self.min_delta = min_delta
         self.counter = 0
-        self.best_score = None
+        self.max_val_acc = 0
         self.early_stop = False
 
-    def __call__(self, val_metric):
-        if self.best_score is None:
-            self.best_score = val_metric
-        elif self.best_score - val_metric > self.min_delta:
+    def __call__(self, val_acc):
+        if val_acc > self.max_val_acc:
+            self.max_val_acc = val_acc
+            self.counter = 0
+        elif val_acc < (self.max_val_acc - self.min_delta):
             self.counter += 1
-            print(f"EarlyStopping counter: {self.counter} out of {self.patience}")
             if self.counter >= self.patience:
                 self.early_stop = True
-        else:
-            self.best_score = val_metric
-            self.counter = 0
+        return self.early_stop
 
 
 class BaseAgent:
@@ -64,8 +62,8 @@ class FairFaceMultiTaskAgent(BaseAgent):
 
     def train(self, train_data, val_data, num_epochs=50, lr=0.1, save_history=False, save_path='.', verbose=False):
         self.model.train()
-        # optimizer = optim.SGD(self.model.parameters(), lr=lr)
-        optimizer = optim.Adam(self.model.parameters(), lr=lr)
+        optimizer = optim.SGD(self.model.parameters(), lr=lr)
+        # optimizer = optim.Adam(self.model.parameters(), lr=lr) # Stuck at low train and val accuracy
 
         # scheduler = lr_scheduler.StepLR(optimizer, step_size=25, gamma=0.1)
 
