@@ -62,7 +62,8 @@ class FairFaceMultiTaskAgent(BaseAgent):
 
     def train(self, train_data, val_data, num_epochs=50, lr=0.1, save_history=False, save_path='.', verbose=False):
         self.model.train()
-        optimizer = optim.SGD(self.model.parameters(), lr=lr)
+        # optimizer = optim.SGD(self.model.parameters(), lr=lr)
+        optimizer = optim.SGD(self.model.parameters(), lr=lr, momentum=0.9) # try 0.9, 0.99, 0.5
         # optimizer = optim.Adam(self.model.parameters(), lr=lr) # Stuck at low train and val accuracy
 
         # scheduler = lr_scheduler.StepLR(optimizer, step_size=25, gamma=0.1)
