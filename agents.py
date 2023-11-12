@@ -12,7 +12,7 @@ import config
 
 
 class EarlyStopping:
-    def __init__(self, patience=5, min_delta=0.1):
+    def __init__(self, patience=5, min_delta=0.01):
         self.patience = patience
         self.min_delta = min_delta
         self.counter = 0
@@ -23,7 +23,7 @@ class EarlyStopping:
         if val_acc > self.max_val_acc:
             self.max_val_acc = val_acc
             self.counter = 0
-        elif val_acc < (self.max_val_acc - self.min_delta):
+        elif self.max_val_acc - val_acc >= self.min_delta:
             self.counter += 1
             if self.counter >= self.patience:
                 self.early_stop = True
@@ -62,12 +62,13 @@ class FairFaceMultiTaskAgent(BaseAgent):
 
     def train(self, train_data, val_data, num_epochs=50, lr=0.1, save_history=False, save_path='.', verbose=False):
         self.model.train()
-        optimizer = optim.SGD(self.model.parameters(), lr=lr)
+        # optimizer = optim.SGD(self.model.parameters(), lr=lr)
+        optimizer = optim.SGD(self.model.parameters(), lr=lr, momentum=0.9) # try 0.9, 0.99, 0.5
         # optimizer = optim.Adam(self.model.parameters(), lr=lr) # Stuck at low train and val accuracy
 
         # scheduler = lr_scheduler.StepLR(optimizer, step_size=25, gamma=0.1)
 
-        early_stopping = EarlyStopping(patience=5, min_delta=0.1)  
+        early_stopping = EarlyStopping(patience=10, min_delta=0.01)  
 
         # Storage for metrics
         history = {
