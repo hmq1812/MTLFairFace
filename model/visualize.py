@@ -15,6 +15,7 @@ def plot_total_loss(data, ax):
 def plot_train_val_accuracy(data, ax):
     ax.plot(data['epoch'], data['train_accuracy'], label='Train Accuracy')
     ax.plot(data['epoch'], data['val_accuracy'], label='Validation Accuracy')
+    ax.set_ylim([0, 1])
     ax.set_xlabel('Epoch')
     ax.set_ylabel('Accuracy')
     ax.set_title('Train vs Validation Accuracy')
@@ -37,7 +38,8 @@ def plot_accuracies(data, ax):
     for task in tasks:
         ax.plot(data['epoch'], data[f'{task}_train_accuracy'], color=colors[task], label=f'Training Accuracy {task}')
         ax.plot(data['epoch'], data[f'{task}_val_accuracy'], color=colors[task], linestyle='dashed', label=f'Validation Accuracy {task}')
-
+    
+    ax.set_ylim([0, 1])
     ax.set_title('Training and Validation Accuracy for Each Task')
     ax.set_xlabel('Epochs')
     ax.set_ylabel('Accuracy')
