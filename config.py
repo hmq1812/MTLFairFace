@@ -8,7 +8,7 @@ CLASS_LIST = [9, 2, 7]
 
 # Paths
 TRAIN_DATA_PATH = "Data/FairFaceData/fairface-img-margin025-trainval/"
-TRAIN_LABEL_FILE = "Data/FairFaceData/fairface_label_test_encoded.csv"
+TRAIN_LABEL_FILE = "Data/FairFaceData/fairface_label_train_encoded.csv"
 # TRAIN_DATA_PATH = "Data/UTKface_Aligned_cropped/UTKFace/"
 # TRAIN_LABEL_FILE = "Data/UTKface_Aligned_cropped/utk_label_train_encoded.csv"
 
@@ -32,7 +32,7 @@ NUM_EPOCHS = 50
 DROPOUT_RATE = 0.5
 
 # Data parameters
-BATCH_SIZE = 16
+BATCH_SIZE = 64
 SHUFFLE = True
 DROP_LAST = True
 TRANSFORM = None
