@@ -12,7 +12,7 @@ import config
 
 
 class EarlyStopping:
-    def __init__(self, patience=5, min_delta=0.1):
+    def __init__(self, patience=5, min_delta=0.01):
         self.patience = patience
         self.min_delta = min_delta
         self.counter = 0
@@ -23,7 +23,7 @@ class EarlyStopping:
         if val_acc > self.max_val_acc:
             self.max_val_acc = val_acc
             self.counter = 0
-        elif val_acc < (self.max_val_acc - self.min_delta):
+        elif self.max_val_acc - val_acc >= self.min_delta:
             self.counter += 1
             if self.counter >= self.patience:
                 self.early_stop = True
@@ -68,7 +68,7 @@ class FairFaceMultiTaskAgent(BaseAgent):
 
         # scheduler = lr_scheduler.StepLR(optimizer, step_size=25, gamma=0.1)
 
-        early_stopping = EarlyStopping(patience=5, min_delta=0.1)  
+        early_stopping = EarlyStopping(patience=10, min_delta=0.01)  
 
         # Storage for metrics
         history = {
