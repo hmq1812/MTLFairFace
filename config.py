@@ -20,7 +20,7 @@ TEST_DATA_PATH = "Data/FairFaceData/fairface-img-margin025-trainval/"
 TEST_LABEL_FILE = "Data/FairFaceData/fairface_label_test_encoded.csv"
 
 SAVE_PATH = "model"
-MODEL_PATH = "model/EfficientNet-ImageNet-131123/best_model.pth"
+MODEL_PATH = "model/EfficientNet-ImageNet-131123/last_model.pth"
 
 # Model Parameters
 LOSS_WEIGHT = None
