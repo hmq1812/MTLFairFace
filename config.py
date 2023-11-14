@@ -29,7 +29,7 @@ ENTROPY_WEIGHT = 0.5
 
 # Train Parameters
 LEARNING_RATE = 0.01
-NUM_EPOCHS = 50
+NUM_EPOCHS = 100
 DROPOUT_RATE = 0.5
 
 # Data parameters
