@@ -273,17 +273,39 @@ class MultiTaskAgent(BaseAgent):
 
 
 class ContinualLearningAgent(MultiTaskAgent):
-    def __init__(self, optimizer_config, model_config, loss_weights=None, pseudo_label_threshold=0.5):
+    def __init__(self, optimizer_config, model_config, loss_weights=None, threshold=0.8, entropy_weight=0.5):
+        # Initialize the base MultiTaskAgent with the given configurations
         super().__init__(optimizer_config, model_config, loss_weights)
-        self.pseudo_label_threshold = pseudo_label_threshold
-        # Initialize the PseudoLabelingLoss instead of the standard MultiTaskLoss
-        self.loss_fn = PseudoLabelingLoss(self.task_names, self.loss_weights, threshold=self.pseudo_label_threshold)
+
+        # Override the loss function with PseudoLabelingLoss specific to continual learning
+        self.loss_fn = PseudoLabelingLoss(
+            task_names=self.task_names,
+            loss_weights=self.loss_weights,
+            threshold=threshold,
+            entropy_weight=entropy_weight
+        )
 
     def train_epoch(self, train_data, optimizer, verbose):
-        # Override or extend to handle missing labels and pseudo-labeling logic
-        pass
+        self.model.train()
+        epoch_loss = 0.0
+        task_losses = {task: 0.0 for task in self.task_names}
+        task_accuracies = {task: 0 for task in self.task_names}
+        task_sample_counters = {task: 0 for task in self.task_names}
 
+        progress_bar = tqdm(train_data, total=len(train_data), desc='Training') if verbose else train_data
+        for inputs, labels in progress_bar:
+            inputs, labels = self.prepare_batch(inputs, labels)
+            total_loss, batch_task_losses, outputs = self.compute_batch_loss(inputs, labels)
+            self.update_model(total_loss, optimizer)
+            self.update_batch_stats(outputs, batch_task_losses, labels, task_losses, task_accuracies, task_sample_counters)
 
+            epoch_loss += total_loss.item()  # We accumulate the loss for reporting
+            if verbose:
+                progress_bar.set_postfix(epoch_loss=epoch_loss)
+
+        return epoch_loss, task_losses, task_accuracies, task_sample_counters
+
+    # The rest of the methods from MultiTaskAgent remain unchanged
 
 
 if __name__ == "__main__":

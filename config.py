@@ -41,6 +41,12 @@ OPTIMIZER = {
     'momentum': 0.9
 }
 
+OPTIMIZER_CONTINUAL = {
+    'optimizer_type': 'Adam',
+    'lr': 1e-3,
+    'momentum': 0.9  # Only used if 'SGD' is selected
+}
+
 NUM_EPOCHS = 10
 
 # Data parameters
