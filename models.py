@@ -5,18 +5,13 @@ from torchvision import models
 from torchvision.models import ResNet50_Weights, EfficientNet_V2_S_Weights
 
 
-class MultiTaskFairFaceModel(nn.Module):
+class MultiTaskModel(nn.Module):
     def __init__(self, num_classes_list, dropout_rate=0.5):
-        super(MultiTaskFairFaceModel, self).__init__()
+        super(MultiTaskModel, self).__init__()
         # # Load a pre-trained ResNet-34 model
-        # # shared_backbone = models.resnet50(weights=ResNet50_Weights.DEFAULT)
         # shared_backbone = models.resnet50(weights=ResNet50_Weights.IMAGENET1K_V2)
-
-        # # Remove the fully connected layer
         # modules = list(shared_backbone.children())[:-1]  # all layers except the last fully connected layer
         # self.shared_backbone = nn.Sequential(*modules)
-
-        # # Find out the the fully connected layer's input features based on the backbone architecture
         # output_feature_size = shared_backbone.fc.in_features  # get the no. of in_features in fc layer
 
         # Load a pre-trained EfficientNetV2 model
@@ -76,7 +71,7 @@ if __name__ == "__main__":
     num_classes_list = [9, 2, 7]  
 
     # Create the model
-    multi_task_model = MultiTaskFairFaceModel(num_classes_list=num_classes_list)
+    multi_task_model = MultiTaskModel(num_classes_list=num_classes_list)
 
     # Move model to appropriate device (e.g., GPU if available)
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")

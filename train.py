@@ -1,7 +1,6 @@
 import argparse
-from agents import FairFaceMultiTaskAgent
+from agents import MultiTaskAgent
 from dataset import FairFaceLoader
-from loss import MultiTaskLoss, PseudoLabelingLoss
 import config
 
 def parse_args():
@@ -15,24 +14,23 @@ def train(args):
     train_data = FairFaceLoader(config.TRAIN_DATA_PATH, config.TRAIN_LABEL_FILE, batch_size=config.BATCH_SIZE)
     val_data = FairFaceLoader(config.VAL_DATA_PATH, config.VAL_LABEL_FILE, batch_size=config.BATCH_SIZE)
     
-    if args.missing_label:
-        print('Using Loss Function for missing label data')
-        loss_fn = PseudoLabelingLoss(task_names=config.CLASS_NAME, loss_weights=config.LOSS_WEIGHT, threshold=config.ASSIGN_LABEL_THRESHOLD, entropy_weight=config.ENTROPY_WEIGHT)
-    else:
-        loss_fn = MultiTaskLoss(task_names=config.CLASS_NAME, loss_weights=config.LOSS_WEIGHT)
+    # if args.missing_label:
+    #     print('Using Loss Function for missing label data')
+    #     loss_fn = PseudoLabelingLoss(task_names=config.CLASS_NAME, loss_weights=config.LOSS_WEIGHT, threshold=config.ASSIGN_LABEL_THRESHOLD, entropy_weight=config.ENTROPY_WEIGHT)
+    # else:
+    #     loss_fn = MultiTaskLoss(task_names=config.CLASS_NAME, loss_weights=config.LOSS_WEIGHT)
         
     
-    agent = FairFaceMultiTaskAgent(loss_fn, config.CLASS_NAME, config.CLASS_LIST, config.LOSS_WEIGHT)
+    agent = MultiTaskAgent(config.OPTIMIZER, config.MODEL_CONFIG, config.LOSS_WEIGHT)
 
-    if args.resume:
-        print("Loading weight ...")
-        agent.load_model(config.MODEL_PATH)
+    # if args.resume:
+    #     print("Loading weight ...")
+    #     agent.load_model(config.MODEL_PATH)
 
     agent.train(
         train_data=train_data,
         val_data=val_data,
         num_epochs=config.NUM_EPOCHS,
-        lr=config.LEARNING_RATE,
         save_history=config.SAVE_HISTORY,
         save_path=config.SAVE_PATH,
         verbose=args.verbose

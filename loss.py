@@ -6,11 +6,16 @@ class MultiTaskLoss:
     def __init__(self, task_names, loss_weights=None, **kwargs):
         self.task_names = task_names
         self.loss_functions = {task: nn.CrossEntropyLoss(reduction='mean') for task in task_names}
-        
         if loss_weights is None:
-            self.loss_weights = {task: 1. / len(task_names) for task in task_names}
+            # If no specific weights are provided, assign equal weights to each task
+            self.loss_weights = {task: 1.0 / len(task_names) for task in task_names}
         else:
-            self.loss_weights = {task: weight for task, weight in zip(task_names, loss_weights)}
+            if len(loss_weights) != len(task_names):
+                raise ValueError("Length of loss_weights must match the number of tasks.")
+            if not all(isinstance(weight, (float, int)) for weight in loss_weights):
+                raise TypeError("All loss weights must be numeric values.")
+            self.loss_weights = dict(zip(task_names, loss_weights))
+
     
     def compute_loss(self, outputs, labels):
         total_loss = 0
@@ -23,10 +28,6 @@ class MultiTaskLoss:
             
         return total_loss, task_losses
 
-
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
 
 class PseudoLabelingLoss:
     def __init__(self, task_names, loss_weights=None, threshold=0.8, entropy_weight=0.5):
@@ -86,3 +87,10 @@ class PseudoLabelingLoss:
             return total_loss, task_losses
 
                 
+if __name__ == "__main__":
+    task_names = ['age', 'gender', 'race']
+    loss_weights = [0.3, 0.3, 0.4]  # Ensure these are numerical values
+    loss_fn = MultiTaskLoss(task_names=task_names, loss_weights=None)
+    print("Final loss weights:", loss_fn.loss_weights)
+
+
