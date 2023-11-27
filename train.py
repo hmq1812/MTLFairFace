@@ -39,9 +39,8 @@ def train_continual(args, train_data, val_data):
         entropy_weight=config.ENTROPY_WEIGHT
     )
 
-    if args.resume:
-        print("Loading weights from:", config.MODEL_PATH)
-        agent.load_model(config.MODEL_PATH)
+    print("Loading weights from:", config.MODEL_PATH)
+    agent.load_model(config.MODEL_PATH)
 
     agent.train(
         train_data=train_data,
@@ -54,12 +53,13 @@ def train_continual(args, train_data, val_data):
 
 
 def train(args):
-    train_data = FairFaceLoader(config.TRAIN_DATA_PATH, config.TRAIN_LABEL_FILE, batch_size=config.BATCH_SIZE)
-    val_data = FairFaceLoader(config.VAL_DATA_PATH, config.VAL_LABEL_FILE, batch_size=config.BATCH_SIZE)
-
     if args.missing_label:
+        train_data = FairFaceLoader(config.TRAIN_DATA_PATH_ML, config.TRAIN_LABEL_FILE_ML, batch_size=config.BATCH_SIZE)
+        val_data = FairFaceLoader(config.VAL_DATA_PATH, config.VAL_LABEL_FILE, batch_size=config.BATCH_SIZE)
         train_continual(args, train_data, val_data)
     else:
+        train_data = FairFaceLoader(config.TRAIN_DATA_PATH, config.TRAIN_LABEL_FILE, batch_size=config.BATCH_SIZE)
+        val_data = FairFaceLoader(config.VAL_DATA_PATH, config.VAL_LABEL_FILE, batch_size=config.BATCH_SIZE)
         train_standard(args, train_data, val_data)
 
 

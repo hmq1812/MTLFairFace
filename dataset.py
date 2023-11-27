@@ -36,7 +36,7 @@ class CustomDataset(torch.utils.data.dataset.Dataset):
         if self.transform:
             image = self.transform(image)
 
-        return image, labels
+        return image, labels, img_file
 
 class BaseDataLoader:
     def __init__(self, batch_size=1, train=True, shuffle=True, drop_last=False):
