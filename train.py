@@ -7,6 +7,7 @@ import config
 def parse_args():
     parser = argparse.ArgumentParser(description="Train the FairFace Multi-Task Model")
     parser.add_argument("-v", '--verbose', action='store_true', default=True, help='Print verbose training logs.')
+    parser.add_argument("-r", '--resume', action='store_true', default=False, help='Resume training from weight file.')
     parser.add_argument("-m", '--missing_label', action='store_true', default=False, help='Use fully labelled data for training.')
     return parser.parse_args()
 

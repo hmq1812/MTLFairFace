@@ -331,30 +331,30 @@ class ContinualLearningAgent(MultiTaskAgent):
         progress_bar = tqdm(train_data, total=len(train_data), desc='Training') if verbose else train_data
         for inputs, labels, file_paths in progress_bar:
             inputs, labels = self.prepare_batch(inputs, labels)
-            outputs = self.model(inputs)  # outputs is a dict with keys like 'age', 'gender', 'race'
+            outputs = self.model(inputs)
 
-            # Initialize total_loss for the batch
             total_loss = torch.tensor(0.0, device=inputs.device)
 
-            # Process each task's output separately
             for task in self.task_names:
                 task_output = outputs[task]
                 task_label = labels[task]
 
-                # Compute loss for each task
                 total_loss, task_specific_loss, _pseudo_labels = self.compute_task_loss(task_output, task_label, file_paths, task)
-                epoch_loss += total_loss.item()  # total_loss is a tensor, so use .item()
-                task_losses[task] += task_specific_loss  # task_specific_loss is already a float
-                task_sample_counters[task] += labels[task].size(0)  # Update the sample counter for each task
+                epoch_loss += total_loss.item()
+                task_losses[task] += task_specific_loss
+                task_sample_counters[task] += labels[task].size(0)
 
-                # Accuracy calculation (if needed) goes here
+                # Update task accuracies
+                _, predicted = torch.max(task_output, 1)
+                correct = (predicted == task_label).sum().item()
+                task_accuracies[task] += correct
 
             self.update_model(total_loss, optimizer)
-            epoch_loss += total_loss.item()
             if verbose:
                 progress_bar.set_postfix(epoch_loss=epoch_loss)
 
         return epoch_loss, task_losses, task_accuracies, task_sample_counters, pseudo_labels_created
+
     
     def compute_task_loss(self, task_output, task_label, file_paths, task_name):
         # Ensure task_label is a tensor, and convert -1 to False, others to True for the mask
