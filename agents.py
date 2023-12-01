@@ -250,7 +250,8 @@ class MultiTaskAgent(BaseAgent):
         task_sample_counts = {task: 0 for task in task_names}
 
         with torch.no_grad():
-            for inputs, labels, _ in data_loader:
+            progress_bar = tqdm(data_loader, desc='Evaluating', leave=False)
+            for inputs, labels, _ in progress_bar:
                 inputs = inputs.to(self.device)
                 labels = {task: label.to(self.device) for task, label in labels.items()}
 
