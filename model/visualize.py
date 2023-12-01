@@ -6,15 +6,15 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 def plot_total_loss(data, ax):
-    ax.plot(data['epoch'], data['total_loss'], label='Total Loss')
+    ax.plot(data['epoch'].to_numpy(), data['total_loss'].to_numpy(), label='Total Loss')
     ax.set_xlabel('Epoch')
     ax.set_ylabel('Total Loss')
     ax.set_title('Total Loss')
     ax.legend()
 
 def plot_train_val_accuracy(data, ax):
-    ax.plot(data['epoch'], data['train_accuracy'], label='Train Accuracy')
-    ax.plot(data['epoch'], data['val_accuracy'], label='Validation Accuracy')
+    ax.plot(data['epoch'].to_numpy(), data['train_accuracy'].to_numpy(), label='Train Accuracy')
+    ax.plot(data['epoch'].to_numpy(), data['val_accuracy'].to_numpy(), label='Validation Accuracy')
     ax.set_ylim([0, 1])
     ax.set_xlabel('Epoch')
     ax.set_ylabel('Accuracy')
@@ -22,9 +22,9 @@ def plot_train_val_accuracy(data, ax):
     ax.legend()
 
 def plot_task_losses(data, ax):
-    ax.plot(data['epoch'], data['age_task_loss'], label='Age Task Loss', color='red')
-    ax.plot(data['epoch'], data['gender_task_loss'], label='Gender Task Loss', color='green')
-    ax.plot(data['epoch'], data['race_task_loss'], label='Race Task Loss', color='purple')
+    ax.plot(data['epoch'].to_numpy(), data['age_task_loss'].to_numpy(), label='Age Task Loss', color='red')
+    ax.plot(data['epoch'].to_numpy(), data['gender_task_loss'].to_numpy(), label='Gender Task Loss', color='green')
+    ax.plot(data['epoch'].to_numpy(), data['race_task_loss'].to_numpy(), label='Race Task Loss', color='purple')
     ax.set_xlabel('Epoch')
     ax.set_ylabel('Task Loss')
     ax.set_title('Task Losses')
@@ -36,8 +36,8 @@ def plot_accuracies(data, ax):
     colors = {'age': 'red', 'gender': 'green', 'race': 'purple'}
 
     for task in tasks:
-        ax.plot(data['epoch'], data[f'{task}_train_accuracy'], color=colors[task], label=f'Training Accuracy {task}')
-        ax.plot(data['epoch'], data[f'{task}_val_accuracy'], color=colors[task], linestyle='dashed', label=f'Validation Accuracy {task}')
+        ax.plot(data['epoch'].to_numpy(), data[f'{task}_train_accuracy'].to_numpy(), color=colors[task], label=f'Training Accuracy {task}')
+        ax.plot(data['epoch'].to_numpy(), data[f'{task}_val_accuracy'].to_numpy(), color=colors[task], linestyle='dashed', label=f'Validation Accuracy {task}')
     
     ax.set_ylim([0, 1])
     ax.set_title('Training and Validation Accuracy for Each Task')
