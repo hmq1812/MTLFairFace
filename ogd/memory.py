@@ -1,5 +1,3 @@
-import torch
-
 class OGDMemory:
     """
     Class to manage memory for Orthogonal Gradient Descent (OGD).
@@ -15,7 +13,7 @@ class OGDMemory:
         self.memory_size = memory_size
         self.memory = []
 
-    def add(self, item):
+    def store(self, item):
         """
         Adds an item to the memory.
         Args:
@@ -27,7 +25,7 @@ class OGDMemory:
             self.memory.pop(0)
             self.memory.append(item)
 
-    def get(self):
+    def retrieve_all(self):
         """
         Retrieves all items in the memory.
         Returns:

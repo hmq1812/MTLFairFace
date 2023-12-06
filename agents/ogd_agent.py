@@ -71,8 +71,6 @@ class OGDAgent(ContinualLearningAgent):
         Args:
             train_data: Training data loader.
         """
-        all_gradients = []
-
         # Switch model to training mode
         self.model.train()
 
@@ -100,16 +98,16 @@ class OGDAgent(ContinualLearningAgent):
             
             # Extract the gradients and convert them to a vector
             gradients = parameters_to_grad_vector(self.model.parameters())
-            print("Gradient shape:", gradients.shape)
-            all_gradients.append(gradients)
+            # Store gradients in memory
+            self.memory.store(gradients)
 
             # Clear gradients after extraction
             self.optimizer.zero_grad()
 
+        # Retrieve all stored gradients
+        all_gradients = self.memory.retrieve_all()
         # Stack all gradients to form a matrix
         gradient_matrix = torch.stack(all_gradients).transpose(0, 1)
-        print("Gradient matrix shape final:", gradient_matrix.shape)
-
         # Orthonormalize the gradient matrix
         self.ogd_basis = orthonormalize(gradient_matrix).to(self.device)
 

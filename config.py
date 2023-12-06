@@ -15,8 +15,8 @@ TRAIN_LABEL_FILE = "Data/FairFaceData/fairface_label_train_encoded.csv"
 # TRAIN_LABEL_FILE = "Data/FairFaceData/test.csv"
 
 VAL_DATA_PATH = "Data/FairFaceData/fairface-img-margin025-trainval/"
-VAL_LABEL_FILE = "Data/FairFaceData/fairface_label_val_encoded.csv"
-# VAL_LABEL_FILE = "Data/FairFaceData/test.csv"
+# VAL_LABEL_FILE = "Data/FairFaceData/fairface_label_val_encoded.csv"
+VAL_LABEL_FILE = "Data/FairFaceData/test.csv"
 
 TEST_DATA_PATH = "Data/FairFaceData/fairface-img-margin025-trainval/"
 TEST_LABEL_FILE = "Data/FairFaceData/fairface_label_test_encoded.csv"
@@ -26,8 +26,8 @@ MODEL_PATH = "model_data/EfficientNet-ImageNet-131123/last_model.pth"
 
 # Missing label learning path
 TRAIN_DATA_PATH_ML = "Data/UTKface_Aligned_cropped/UTKFace/"
-TRAIN_LABEL_FILE_ML = "Data/UTKface_Aligned_cropped/utk_label_train_encoded.csv"
-# TRAIN_LABEL_FILE_ML = "Data/UTKface_Aligned_cropped/test.csv"
+# TRAIN_LABEL_FILE_ML = "Data/UTKface_Aligned_cropped/utk_label_train_encoded.csv"
+TRAIN_LABEL_FILE_ML = "Data/UTKface_Aligned_cropped/test.csv"
 
 # Model Parameters
 LOSS_WEIGHT = None
