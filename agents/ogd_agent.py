@@ -32,7 +32,7 @@ class OGDAgent(ContinualLearningAgent):
 
     def train(self, train_data, val_data, num_epochs=50, save_history=False, save_path='.', verbose=False):
         self.model.train()
-        early_stopping = EarlyStopping(patience=10, min_delta=0.01)  
+        # early_stopping = EarlyStopping(patience=10, min_delta=0.01)  
         history = self.init_history()
 
         best_accuracy = 0.0
@@ -56,9 +56,9 @@ class OGDAgent(ContinualLearningAgent):
             if save_history:
                 self._save_history(history, save_path)
 
-            if early_stopping(val_eval_metrics['accuracy']):
-                print("Early stopping triggered")
-                break
+            # if early_stopping(val_eval_metrics['accuracy']):
+            #     print("Early stopping triggered")
+            #     break
 
             # Update OGD basis at the end of each epoch
             self.update_ogd_basis(train_data)
