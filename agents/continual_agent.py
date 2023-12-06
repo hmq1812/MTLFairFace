@@ -83,7 +83,7 @@ class ContinualLearningAgent(MultiTaskAgent):
                 task_output = outputs[task]
                 task_label = labels[task]
 
-                total_loss, task_specific_loss, _pseudo_labels = self.compute_task_loss(task_output, task_label, file_paths, task)
+                total_loss, task_specific_loss, _pseudo_labels = self.compute_batch_loss(task_output, task_label, file_paths, task)
                 epoch_loss += total_loss.item()
                 task_losses[task] += task_specific_loss
                 task_sample_counters[task] += labels[task].size(0)
@@ -100,7 +100,7 @@ class ContinualLearningAgent(MultiTaskAgent):
         return epoch_loss, task_losses, task_accuracies, task_sample_counters, pseudo_labels_created
 
     
-    def compute_task_loss(self, task_output, task_label, file_paths, task_name):
+    def compute_batch_loss(self, task_output, task_label, file_paths, task_name):
         # Ensure task_label is a tensor, and convert -1 to False, others to True for the mask
         valid_label_mask = task_label != -1
 

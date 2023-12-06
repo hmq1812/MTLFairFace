@@ -80,7 +80,7 @@ def train_ogd(args, train_data, val_data):
 
 def train(args):
     if args.ogd:
-        train_data = FairFaceLoader(config.TRAIN_DATA_PATH, config.TRAIN_LABEL_FILE, batch_size=config.BATCH_SIZE)
+        train_data = FairFaceLoader(config.TRAIN_DATA_PATH_ML, config.TRAIN_LABEL_FILE_ML, batch_size=config.BATCH_SIZE)
         val_data = FairFaceLoader(config.VAL_DATA_PATH, config.VAL_LABEL_FILE, batch_size=config.BATCH_SIZE)
         train_ogd(args, train_data, val_data)
     elif args.missing_label:

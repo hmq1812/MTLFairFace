@@ -13,6 +13,7 @@ from loss import MultiTaskLoss, PseudoLabelingLoss
 import config
 from .base_agent import EarlyStopping
 from .continual_agent import ContinualLearningAgent
+from .mtl_agent import MultiTaskAgent
 
 from ogd.memory import *
 from ogd.utils import *
@@ -39,11 +40,14 @@ class OGDAgent(ContinualLearningAgent):
         last_model_path = os.path.join(save_path, 'last_model.pth')
 
         for epoch in range(num_epochs):
-            epoch_loss, task_losses, task_accuracies, task_sample_counters = self.train_epoch(train_data, verbose)
-
+            epoch_loss, task_losses, task_accuracies, task_sample_counters, pseudo_labels_created = self.train_epoch(train_data, self.optimizer, verbose)
             self.update_history(history, epoch_loss, task_losses, task_accuracies, task_sample_counters)
-            val_eval_metrics = self.eval(val_data)
+            val_eval_metrics = self.eval(val_data, self.task_names)
             self.update_validation_history(history, val_eval_metrics)
+
+            # Update label file with pseudo-labels if necessary
+            if pseudo_labels_created:
+                self.update_label_file(config.TRAIN_LABEL_FILE, pseudo_labels_created, task_name='race')
 
             best_accuracy = self.save_best_model(val_eval_metrics, best_accuracy, best_model_path)
             if verbose:
@@ -61,28 +65,6 @@ class OGDAgent(ContinualLearningAgent):
 
         self.save_model(last_model_path)
 
-    def train_epoch(self, train_data, verbose):
-        self.model.train()
-        epoch_loss = 0.0
-        task_losses = {task: 0.0 for task in self.task_names}
-        task_accuracies = {task: 0 for task in self.task_names}
-        task_sample_counters = {task: 0 for task in self.task_names}
-
-        progress_bar = tqdm(train_data, total=len(train_data), desc='Training') if verbose else train_data
-        for inputs, labels, _ in progress_bar:
-            inputs, labels = self.prepare_batch(inputs, labels)
-            outputs = self.model(inputs)
-            total_loss, batch_task_losses = self.compute_batch_loss(outputs, labels)
-
-            self.update_model(total_loss)  # Using OGD optimizer step
-            self.update_batch_stats(outputs, batch_task_losses, labels, task_losses, task_accuracies, task_sample_counters)
-
-            epoch_loss += total_loss.item()
-            if verbose:
-                progress_bar.set_postfix(epoch_loss=epoch_loss / len(train_data))
-
-        return epoch_loss, task_losses, task_accuracies, task_sample_counters
-
     def update_ogd_basis(self, train_data):
         """
         Updates the OGD basis using the provided training data.
@@ -94,32 +76,39 @@ class OGDAgent(ContinualLearningAgent):
         # Switch model to training mode
         self.model.train()
 
-        for data, targets in train_data:
-            # Ensure data and targets are on the correct device
+        for data, targets, _ in train_data:
+            # Ensure data is on the correct device
             data = data.to(self.device)
-            targets = targets.to(self.device)
+
+            # Move each set of labels to the correct device
+            targets_on_device = {task: labels.to(self.device) for task, labels in targets.items()}
 
             # Forward pass
             outputs = self.model(data)
 
-            # Compute loss for the current task
-            loss = self.loss_fn(outputs, targets)
+            # Compute total loss for all tasks
+            total_loss = 0.0
+            for task, output in outputs.items():
+                task_loss, _ = self.loss_fn.compute_loss(output, targets_on_device[task], task)
+                total_loss += task_loss
 
             # Zero gradients before backward pass
             self.optimizer.zero_grad()
 
             # Backward pass to compute gradients
-            loss.backward()
-
+            total_loss.backward()
+            
             # Extract the gradients and convert them to a vector
             gradients = parameters_to_grad_vector(self.model.parameters())
+            print("Gradient shape:", gradients.shape)
             all_gradients.append(gradients)
 
             # Clear gradients after extraction
             self.optimizer.zero_grad()
 
         # Stack all gradients to form a matrix
-        gradient_matrix = torch.stack(all_gradients)
+        gradient_matrix = torch.stack(all_gradients).transpose(0, 1)
+        print("Gradient matrix shape final:", gradient_matrix.shape)
 
         # Orthonormalize the gradient matrix
         self.ogd_basis = orthonormalize(gradient_matrix).to(self.device)
@@ -146,6 +135,25 @@ class OGDAgent(ContinualLearningAgent):
 
         # Optionally, clear the gradients after the step (if not done automatically)
         self.model.zero_grad()
+
+    def update_model(self, total_loss, optimizer):
+        """
+        Updates the model parameters based on the total loss.
+        Args:
+            total_loss (Tensor): The computed loss for a batch of data.
+        """
+        # Zero the gradients before the backward pass
+        self.optimizer.zero_grad()
+
+        # Compute gradients (backpropagation)
+        total_loss.backward()
+
+        # Apply gradient clipping if needed
+        torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=1.0)
+
+        # Perform the optimizer step (including OGD adjustments)
+        self.optimizer_step()
+
 
 
 if __name__ == "__main__":
