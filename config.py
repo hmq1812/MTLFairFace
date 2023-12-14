@@ -50,11 +50,10 @@ OPTIMIZER_CONTINUAL = {
 NUM_EPOCHS = 50
 
 # Data parameters
-BATCH_SIZE = 32
+BATCH_SIZE = 8
 SHUFFLE = True
 DROP_LAST = True
 TRANSFORM = None
-
 
 # Flags
 SAVE_MODEL = True
@@ -62,3 +61,6 @@ SAVE_HISTORY = True
 
 # OGD Params
 OGD_MEMORY_SIZE = 30
+
+# REPLAY params
+REPLAY_RATIO = 0.25

@@ -3,8 +3,10 @@ import torch
 import torchvision
 import pandas as pd
 from PIL import Image
-from sklearn.preprocessing import LabelEncoder
 from math import ceil
+import random
+
+import config
 
 class CustomDataset(torch.utils.data.dataset.Dataset):
     def __init__(self, data_path, label_path, transform=None):
@@ -108,12 +110,57 @@ class FairFaceLoader(BaseDataLoader):
         return iter(self.dataloader)
 
 
+class ReplayDataset(torch.utils.data.Dataset):
+    def __init__(self, train_data_path, train_label_path, replay_data_path, replay_label_path, replay_ratio=0.5, transform=None):
+        self.train_dataset = CustomDataset(train_data_path, train_label_path, transform)
+        self.replay_dataset = CustomDataset(replay_data_path, replay_label_path, transform)
+        self.replay_ratio = replay_ratio
+
+    def __len__(self):
+        return int(len(self.train_dataset) * (1 + self.replay_ratio))
+
+    def __getitem__(self, idx):
+        if idx < len(self.train_dataset):
+            return self.train_dataset[idx]
+        else:
+            replay_idx = random.randint(0, len(self.replay_dataset) - 1)
+            return self.replay_dataset[replay_idx]
+
+class ReplayDataLoader(BaseDataLoader):
+    def __init__(self, train_data_path, train_label_path, replay_data_path, replay_label_path, replay_ratio=0.5, batch_size=128, shuffle=True, drop_last=False, transform=None):
+        super(ReplayDataLoader, self).__init__(batch_size, shuffle, drop_last)
+        
+        self.transform = transform if transform else torchvision.transforms.Compose([
+            torchvision.transforms.Resize((224, 224)),
+            torchvision.transforms.ToTensor(),
+            torchvision.transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+        ])
+
+        self.dataset = ReplayDataset(train_data_path, train_label_path, replay_data_path, replay_label_path, replay_ratio, transform=self.transform)
+        self._len = len(self.combined_dataset)//batch_size if drop_last else ceil(len(self.dataset)/batch_size)
+
+        self.dataloader = torch.utils.data.DataLoader(self.dataset,
+                                                batch_size=batch_size,
+                                                shuffle=shuffle,
+                                                drop_last=drop_last)
+    def get_loader(self):
+        return self.dataloader
+
+    def __len__(self):
+        return self._len
+
+    def __iter__(self):
+        return iter(self.dataloader)
+
+
 if __name__ == "__main__":
-        F = FairFaceLoader("Data/UTKface_Aligned_cropped/UTKFace", "Data/UTKface_Aligned_cropped/utk_label_train_encoded.csv", batch_size=16, shuffle=False, drop_last=False, transform=None)
-        print(F.dataset[1])
-        for inputs, labels in F:  # labels should be a list of labels for each task.
-            print(inputs)
-            print(labels)
-            break
+    F = ReplayDataLoader(config.TRAIN_DATA_PATH_ML, config.TRAIN_LABEL_FILE_ML, config.TRAIN_DATA_PATH, config.TRAIN_LABEL_FILE, replay_ratio=config.REPLAY_RATIO, batch_size=config.BATCH_SIZE)
+    # F = FairFaceLoader(config.TRAIN_DATA_PATH_ML, config.TRAIN_LABEL_FILE_ML, batch_size=16)
+    print(F.dataset[1])
+    print(len(F))
+    # for inputs, labels, _ in F:  # labels should be a list of labels for each task.
+    #     print(inputs)
+    #     print(labels)
+    #     break
 
             
