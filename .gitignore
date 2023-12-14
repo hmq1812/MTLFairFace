@@ -8,6 +8,9 @@ Data/FairFaceData/fairface-img-margin125-trainval
 Data/UTKface_Aligned_cropped/crop_part1
 Data/UTKface_Aligned_cropped/UTKFace
 
+# Model data
+model_data/
+
 # Vagrant
 .vagrant/
 
