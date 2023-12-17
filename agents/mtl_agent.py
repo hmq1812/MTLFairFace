@@ -176,19 +176,14 @@ class MultiTaskAgent(BaseAgent):
                 writer.writerow(row)
 
     def get_history_headers(self):
-        return ['epoch', 'total_loss', 'train_accuracy', 'val_accuracy'] + \
-               [f"{task}_task_loss" for task in self.task_names] + \
-               [f"{task}_train_accuracy" for task in self.task_names] + \
-               [f"{task}_val_accuracy" for task in self.task_names]
-
-    def format_history_data(self, history):
-        num_epochs = len(history['train_accuracy'])
-        for epoch in range(num_epochs):
-            yield [epoch + 1] + \
-                  [history['total_loss'][epoch], history['train_accuracy'][epoch], history['val_accuracy'][epoch]] + \
-                  [history['task_loss'][task][epoch] for task in self.task_names] + \
-                  [history['train_task_accuracy'][task][epoch] for task in self.task_names] + \
-                  [history['val_task_accuracy'][task][epoch] for task in self.task_names]
+        headers = ['epoch', 'total_loss', 'train_accuracy', 'val_accuracy']
+        for task in self.task_names:
+            headers.extend([
+                f"{task}_task_loss",
+                f"{task}_train_accuracy",
+                f"{task}_val_accuracy"
+            ])
+        return headers
 
     def save_model(self, save_path='model.pth'):
         """Save the current model parameters to the specified path."""
